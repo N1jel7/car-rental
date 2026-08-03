@@ -1,4 +1,6 @@
 package com.innowise.carrental.entity;
 
-public enum Role {
+enum Role {
+    USER,
+    ADMIN
 }
