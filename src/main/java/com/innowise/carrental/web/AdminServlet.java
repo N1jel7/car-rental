@@ -7,6 +7,7 @@ import com.innowise.carrental.exception.ServiceException;
 import com.innowise.carrental.exception.ValidationException;
 import com.innowise.carrental.service.BookingService;
 import com.innowise.carrental.service.CarService;
+import com.innowise.carrental.util.ServletUtil;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -78,7 +79,7 @@ public class AdminServlet extends HttpServlet {
     private void showCars(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        int page = parsePageParam(request.getParameter("page"));
+        int page = ServletUtil.parsePageParam(request.getParameter("page"));
 
         try {
             List<Car> cars = carService.findAvailable(page, PAGE_SIZE);
@@ -106,7 +107,7 @@ public class AdminServlet extends HttpServlet {
     private void showBookings(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        int page = parsePageParam(request.getParameter("page"));
+        int page = ServletUtil.parsePageParam(request.getParameter("page"));
         String statusParam = request.getParameter("status");
 
         try {
@@ -280,20 +281,6 @@ public class AdminServlet extends HttpServlet {
             log.error("Admin failed to complete booking id={}", bookingIdParam, e);
             response.sendRedirect(request.getContextPath()
                     + "/admin/bookings?error=" + encode(e.getMessage()));
-        }
-    }
-
-    // --- helpers ---
-
-    private int parsePageParam(String pageParam) {
-        if (pageParam == null || pageParam.isBlank()) {
-            return 1;
-        }
-        try {
-            int page = Integer.parseInt(pageParam);
-            return page > 0 ? page : 1;
-        } catch (NumberFormatException e) {
-            return 1;
         }
     }
 

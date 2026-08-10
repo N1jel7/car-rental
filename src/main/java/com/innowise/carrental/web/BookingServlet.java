@@ -6,6 +6,7 @@ import com.innowise.carrental.exception.ServiceException;
 import com.innowise.carrental.exception.ValidationException;
 import com.innowise.carrental.filter.AuthFilter;
 import com.innowise.carrental.service.BookingService;
+import com.innowise.carrental.util.ServletUtil;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -71,7 +72,7 @@ public class BookingServlet extends HttpServlet {
             throws ServletException, IOException {
 
         User user = getSessionUser(request);
-        int page = parsePageParam(request.getParameter("page"));
+        int page = ServletUtil.parsePageParam(request.getParameter("page"));
 
         try {
             List<Booking> bookings = bookingService.findByUser(user.getId(), page, PAGE_SIZE);
@@ -161,18 +162,6 @@ public class BookingServlet extends HttpServlet {
     private User getSessionUser(HttpServletRequest request) {
         HttpSession session = request.getSession(false);
         return (User) session.getAttribute(AuthFilter.SESSION_USER);
-    }
-
-    private int parsePageParam(String pageParam) {
-        if (pageParam == null || pageParam.isBlank()) {
-            return 1;
-        }
-        try {
-            int page = Integer.parseInt(pageParam);
-            return page > 0 ? page : 1;
-        } catch (NumberFormatException e) {
-            return 1;
-        }
     }
 
     private String encode(String value) {

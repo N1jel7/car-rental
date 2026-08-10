@@ -4,6 +4,7 @@ import com.innowise.carrental.entity.Car;
 import com.innowise.carrental.entity.CarImage;
 import com.innowise.carrental.exception.ServiceException;
 import com.innowise.carrental.service.CarService;
+import com.innowise.carrental.util.ServletUtil;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -36,7 +37,7 @@ public class CarListServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        int page = parsePageParam(request.getParameter("page"));
+        int page = ServletUtil.parsePageParam(request.getParameter("page"));
 
         try {
             List<Car> cars = carService.findAvailable(page, PAGE_SIZE);
@@ -61,19 +62,6 @@ public class CarListServlet extends HttpServlet {
             log.error("Failed to load car catalog page={}", page, e);
             request.setAttribute("error", "Failed to load cars. Please try again.");
             request.getRequestDispatcher(CARS_PAGE).forward(request, response);
-        }
-    }
-
-    // Safely parse page parameter
-    private int parsePageParam(String pageParam) {
-        if (pageParam == null || pageParam.isBlank()) {
-            return 1;
-        }
-        try {
-            int page = Integer.parseInt(pageParam);
-            return page > 0 ? page : 1;
-        } catch (NumberFormatException e) {
-            return 1;
         }
     }
 

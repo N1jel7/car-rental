@@ -6,6 +6,7 @@ import com.innowise.carrental.filter.AuthFilter;
 import com.innowise.carrental.service.BookingService;
 import com.innowise.carrental.service.CarService;
 import com.innowise.carrental.service.ReviewService;
+import com.innowise.carrental.util.ServletUtil;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -45,7 +46,7 @@ public class CarDetailServlet extends HttpServlet {
             return;
         }
 
-        int reviewPage = parsePageParam(request.getParameter("reviewPage"));
+        int reviewPage = ServletUtil.parsePageParam(request.getParameter("reviewPage"));
 
         try {
             Car car = carService.findById(carId);
@@ -114,18 +115,6 @@ public class CarDetailServlet extends HttpServlet {
         } catch (NumberFormatException e) {
             response.sendError(HttpServletResponse.SC_NOT_FOUND, "Invalid car id");
             return null;
-        }
-    }
-
-    private int parsePageParam(String pageParam) {
-        if (pageParam == null || pageParam.isBlank()) {
-            return 1;
-        }
-        try {
-            int page = Integer.parseInt(pageParam);
-            return page > 0 ? page : 1;
-        } catch (NumberFormatException e) {
-            return 1;
         }
     }
 
