@@ -1,11 +1,11 @@
 package com.innowise.carrental.exception;
 
-public class NotFoundException extends Exception {
-    public NotFoundException(String message) {
+public class ServiceException extends Exception {
+    public ServiceException(String message) {
         super(message);
     }
 
-    public NotFoundException(String message, Throwable cause) {
+    public ServiceException(String message, Throwable cause) {
         super(message, cause);
     }
 }
