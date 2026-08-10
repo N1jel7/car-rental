@@ -3,14 +3,12 @@ package com.innowise.carrental.filter;
 import com.innowise.carrental.entity.Role;
 import com.innowise.carrental.entity.User;
 import jakarta.servlet.*;
-import jakarta.servlet.annotation.WebFilter;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 
-@WebFilter({"/bookings/*", "/profile/*", "/admin/*"})
 public class AuthFilter implements Filter {
 
     public static final String SESSION_USER = "user";
