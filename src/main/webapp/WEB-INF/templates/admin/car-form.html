@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/base :: head('Admin — Машина')}"></head>
+<body>
+<nav th:replace="~{fragments/base :: navbar}"></nav>
+
+<div class="page-content">
+    <div class="container" style="max-width:640px">
+
+        <div class="mb-24">
+            <a th:href="@{/admin/cars}" class="btn btn-ghost btn-sm">← Назад к списку</a>
+        </div>
+
+        <h1 class="mb-24"
+            th:text="${car != null} ? 'Редактировать машину' : 'Добавить машину'">
+            Добавить машину
+        </h1>
+
+        <div th:if="${param.error}" class="alert alert-error mb-24" data-dismiss="5000">
+            <span>⚠</span><span th:text="${param.error}">Ошибка</span>
+        </div>
+
+        <div class="card card-body">
+            <form th:action="${car != null} ? @{/admin/cars/update} : @{/admin/cars/create}"
+                  method="post" class="form-stack" data-validate>
+
+                <input th:if="${car != null}" type="hidden" name="carId" th:value="${car.id}"/>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Марка</label>
+                        <input class="form-control" type="text" name="make"
+                               th:value="${car?.make}" placeholder="Toyota" required/>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Модель</label>
+                        <input class="form-control" type="text" name="model"
+                               th:value="${car?.model}" placeholder="Camry" required/>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Год выпуска</label>
+                        <input class="form-control" type="number" name="year"
+                               th:value="${car?.year}" placeholder="2022"
+                               min="1900" max="2026" required/>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Цена за день (BYN)</label>
+                        <input class="form-control" type="number" name="pricePerDay"
+                               th:value="${car?.pricePerDay}"
+                               placeholder="75.00" step="0.01" min="0.01" required/>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Описание</label>
+                    <textarea class="form-control" name="description" rows="4"
+                              placeholder="Комфортный седан бизнес-класса..."
+                              th:text="${car?.description}"></textarea>
+                </div>
+
+                <div style="display:flex;justify-content:flex-end;gap:12px">
+                    <a th:href="@{/admin/cars}" class="btn btn-outline">Отмена</a>
+                    <button type="submit" class="btn btn-primary"
+                            th:text="${car != null} ? 'Сохранить' : 'Добавить машину'">
+                        Добавить машину
+                    </button>
+                </div>
+            </form>
+        </div>
+
+    </div>
+</div>
+
+<footer th:replace="~{fragments/base :: footer}"></footer>
+<script th:src="@{/static/js/main.js}"></script>
+</body>
+</html>

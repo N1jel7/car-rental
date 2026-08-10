@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/base :: head('Вход')}"></head>
+<body>
+
+<nav th:replace="~{fragments/base :: navbar}"></nav>
+
+<div class="auth-page">
+    <div class="auth-card fade-in">
+
+        <div class="auth-card__logo">CarRental</div>
+        <h1 class="auth-card__title" th:text="#{auth.login.title}">Добро пожаловать</h1>
+        <p class="auth-card__subtitle" th:text="#{auth.login.subtitle}">Войдите в аккаунт</p>
+
+        <!-- Error alert -->
+        <div th:if="${error}" class="alert alert-error mb-24" data-dismiss="5000">
+            <span>⚠</span>
+            <span th:text="${error}">Ошибка</span>
+        </div>
+
+        <!-- Success (e.g. after password change) -->
+        <div th:if="${param.success}" class="alert alert-success mb-24" data-dismiss="4000">
+            <span>✓</span>
+            <span th:text="#{auth.password.changed}">Пароль изменён. Войдите снова.</span>
+        </div>
+
+        <form th:action="@{/login}" method="post" data-validate class="form-stack">
+            <div class="form-group">
+                <label class="form-label" th:text="#{form.email}">Email</label>
+                <input class="form-control"
+                       type="email"
+                       name="email"
+                       th:value="${email}"
+                       placeholder="you@example.com"
+                       required
+                       autocomplete="email"/>
+            </div>
+            <div class="form-group">
+                <label class="form-label" th:text="#{form.password}">Пароль</label>
+                <input class="form-control"
+                       type="password"
+                       name="password"
+                       placeholder="••••••••"
+                       required
+                       autocomplete="current-password"/>
+            </div>
+            <button type="submit" class="btn btn-primary btn-full btn-lg" th:text="#{nav.login}">
+                Войти
+            </button>
+        </form>
+
+        <div class="divider"></div>
+        <p class="text-center text-sm text-muted">
+            <th:block th:text="#{auth.no.account}">Нет аккаунта?</th:block>
+            <a th:href="@{/register}" th:text="#{nav.register}">Зарегистрироваться</a>
+        </p>
+    </div>
+</div>
+
+<script th:src="@{/static/js/main.js}"></script>
+</body>
+</html>

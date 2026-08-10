@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/base :: head('Профиль')}"></head>
+<body>
+<nav th:replace="~{fragments/base :: navbar}"></nav>
+
+<div class="page-content">
+    <div class="container" style="max-width:640px">
+
+        <h1 class="mb-24">Профиль</h1>
+
+        <div th:if="${param.success}" class="alert alert-success mb-24" data-dismiss="4000">
+            <span>✓</span>
+            <span th:if="${param.success == 'profile_updated'}" th:text="#{profile.updated}">Профиль сохранён</span>
+            <span th:if="${param.success == 'password_changed'}" th:text="#{profile.password.changed}">Пароль изменён</span>
+        </div>
+        <div th:if="${param.error}" class="alert alert-error mb-24" data-dismiss="5000">
+            <span>⚠</span><span th:text="${param.error}">Ошибка</span>
+        </div>
+
+        <!-- Profile info -->
+        <div class="card card-body mb-24">
+            <h3 class="mb-24">Личные данные</h3>
+            <form th:action="@{/profile/update}" method="post" class="form-stack" data-validate>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" th:text="#{form.fullName}">Имя</label>
+                        <input class="form-control" type="text" name="fullName"
+                               th:value="${session.user.fullName}" required/>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" th:text="#{form.phone}">Телефон</label>
+                        <input class="form-control" type="tel" name="phone"
+                               th:value="${session.user.phone}"/>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" th:text="#{form.email}">Email</label>
+                    <input class="form-control" type="email"
+                           th:value="${session.user.email}" disabled
+                           style="opacity:.6;cursor:not-allowed"/>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Язык интерфейса</label>
+                    <select class="form-control" name="locale">
+                        <option value="ru" th:selected="${session.user.locale == 'ru'}">Русский</option>
+                        <option value="en" th:selected="${session.user.locale == 'en'}">English</option>
+                        <option value="be" th:selected="${session.user.locale == 'be'}">Беларуская</option>
+                    </select>
+                </div>
+                <div style="display:flex;justify-content:flex-end">
+                    <button type="submit" class="btn btn-primary" th:text="#{profile.save}">Сохранить</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Change password -->
+        <div class="card card-body">
+            <h3 class="mb-24" th:text="#{profile.change.password}">Сменить пароль</h3>
+            <form th:action="@{/profile/password}" method="post" class="form-stack" data-validate>
+                <div class="form-group">
+                    <label class="form-label" th:text="#{profile.old.password}">Текущий пароль</label>
+                    <input class="form-control" type="password" name="oldPassword"
+                           placeholder="••••••••" required/>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" th:text="#{profile.new.password}">Новый пароль</label>
+                        <input class="form-control" type="password" name="newPassword"
+                               placeholder="Минимум 8 символов" required/>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" th:text="#{profile.confirm.password}">Подтверждение</label>
+                        <input class="form-control" type="password" name="confirmPassword"
+                               placeholder="••••••••" required/>
+                    </div>
+                </div>
+                <div style="display:flex;justify-content:flex-end">
+                    <button type="submit" class="btn btn-outline" th:text="#{profile.change.password}">
+                        Сменить пароль
+                    </button>
+                </div>
+            </form>
+        </div>
+
+    </div>
+</div>
+
+<footer th:replace="~{fragments/base :: footer}"></footer>
+<script th:src="@{/static/js/main.js}"></script>
+</body>
+</html>

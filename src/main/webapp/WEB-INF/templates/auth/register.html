@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/base :: head('Регистрация')}"></head>
+<body>
+
+<nav th:replace="~{fragments/base :: navbar}"></nav>
+
+<div class="auth-page">
+    <div class="auth-card fade-in">
+
+        <div class="auth-card__logo">CarRental</div>
+        <h1 class="auth-card__title" th:text="#{auth.register.title}">Создать аккаунт</h1>
+        <p class="auth-card__subtitle" th:text="#{auth.register.subtitle}">Это займёт минуту</p>
+
+        <div th:if="${error}" class="alert alert-error mb-24" data-dismiss="5000">
+            <span>⚠</span>
+            <span th:text="${error}">Ошибка</span>
+        </div>
+
+        <form th:action="@{/register}" method="post" data-validate class="form-stack">
+            <div class="form-group">
+                <label class="form-label" th:text="#{form.fullName}">Полное имя</label>
+                <input class="form-control"
+                       type="text"
+                       name="fullName"
+                       th:value="${fullName}"
+                       placeholder="Иван Петров"
+                       required
+                       autocomplete="name"/>
+            </div>
+            <div class="form-group">
+                <label class="form-label" th:text="#{form.email}">Email</label>
+                <input class="form-control"
+                       type="email"
+                       name="email"
+                       th:value="${email}"
+                       placeholder="you@example.com"
+                       required
+                       autocomplete="email"/>
+            </div>
+            <div class="form-group">
+                <label class="form-label" th:text="#{form.phone}">Телефон</label>
+                <input class="form-control"
+                       type="tel"
+                       name="phone"
+                       th:value="${phone}"
+                       placeholder="+375 29 000-00-00"
+                       autocomplete="tel"/>
+            </div>
+            <div class="form-group">
+                <label class="form-label" th:text="#{form.password}">Пароль</label>
+                <input class="form-control"
+                       type="password"
+                       name="password"
+                       placeholder="Минимум 8 символов"
+                       required
+                       autocomplete="new-password"/>
+            </div>
+            <button type="submit" class="btn btn-primary btn-full btn-lg"
+                    th:text="#{nav.register}">Зарегистрироваться</button>
+        </form>
+
+        <div class="divider"></div>
+        <p class="text-center text-sm text-muted">
+            <th:block th:text="#{auth.have.account}">Уже есть аккаунт?</th:block>
+            <a th:href="@{/login}" th:text="#{nav.login}">Войти</a>
+        </p>
+    </div>
+</div>
+
+<script th:src="@{/static/js/main.js}"></script>
+</body>
+</html>

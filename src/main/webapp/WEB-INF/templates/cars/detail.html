@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/base :: head(${car.make + ' ' + car.model})}"></head>
+<body>
+<nav th:replace="~{fragments/base :: navbar}"></nav>
+
+<div class="page-content">
+    <div class="container">
+
+        <div class="mb-24">
+            <a th:href="@{/cars}" class="btn btn-ghost btn-sm">← <th:block th:text="#{nav.cars}">Машины</th:block></a>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 380px;gap:32px;align-items:start">
+
+            <!-- Left: images + reviews -->
+            <div>
+                <!-- Primary image -->
+                <div style="border-radius:var(--radius-md);overflow:hidden;background:var(--bg-elevated);margin-bottom:16px;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center">
+                    <img th:if="${!images.isEmpty()}"
+                         th:src="@{/uploads/} + ${images[0].filePath}"
+                         th:alt="${car.make + ' ' + car.model}"
+                         style="width:100%;height:100%;object-fit:cover"/>
+                    <span th:if="${images.isEmpty()}" style="font-size:4rem">🚗</span>
+                </div>
+
+                <!-- Thumbnail gallery -->
+                <div th:if="${images.size() > 1}"
+                     style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px">
+                    <img th:each="img : ${images}"
+                         th:src="@{/uploads/} + ${img.filePath}"
+                         style="width:80px;height:60px;object-fit:cover;border-radius:var(--radius-sm);border:1px solid var(--border);cursor:pointer"
+                         onclick="document.querySelector('.main-img').src=this.src"/>
+                </div>
+
+                <div class="divider"></div>
+
+                <!-- Description -->
+                <div class="mb-24">
+                    <h3 class="mb-16" th:text="#{cars.description}">Описание</h3>
+                    <p class="text-muted" th:text="${car.description}">Описание машины</p>
+                </div>
+
+                <div class="divider"></div>
+
+                <!-- Reviews -->
+                <div>
+                    <div class="section-header">
+                        <h3 th:text="#{cars.reviews}">Отзывы</h3>
+                        <div class="flex gap-8" th:if="${averageRating > 0}">
+                            <span class="stars">
+                                <th:block th:each="i : ${#numbers.sequence(1,5)}">
+                                    <span th:classappend="${i <= averageRating} ? '' : 'empty'">★</span>
+                                </th:block>
+                            </span>
+                            <span class="text-mono text-sm"
+                                  th:text="${#numbers.formatDecimal(averageRating,1,1)}">4.5</span>
+                        </div>
+                    </div>
+
+                    <!-- Review form -->
+                    <div th:if="${canReview}" class="card card-body mb-24">
+                        <h4 class="mb-16" th:text="#{review.leave}">Оставить отзыв</h4>
+                        <form th:action="@{/reviews/create}" method="post" class="form-stack">
+                            <input type="hidden" name="bookingId" th:value="${completedBookingId}"/>
+                            <input type="hidden" name="carId" th:value="${car.id}"/>
+
+                            <div class="form-group">
+                                <div class="form-label" th:text="#{review.rating}">Оценка</div>
+                                <div class="star-input" style="display:flex;gap:4px;font-size:1.8rem;cursor:pointer">
+                                    <span class="star-input__star" th:each="i : ${#numbers.sequence(1,5)}">★</span>
+                                    <input type="hidden" name="rating" value="5"/>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" th:text="#{review.comment}">Комментарий</label>
+                                <textarea class="form-control" name="comment" rows="3"
+                                          th:placeholder="#{review.comment.placeholder}"
+                                          required></textarea>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary"
+                                    th:text="#{review.submit}">Отправить отзыв</button>
+                        </form>
+                    </div>
+
+                    <!-- Reviews list -->
+                    <div th:if="${!reviews.isEmpty()}" style="display:flex;flex-direction:column;gap:16px">
+                        <div th:each="review : ${reviews}" class="card card-body">
+                            <div class="flex-between mb-8">
+                                <div class="stars">
+                                    <th:block th:each="i : ${#numbers.sequence(1,5)}">
+                                        <span th:classappend="${i <= review.rating} ? '' : 'empty'">★</span>
+                                    </th:block>
+                                </div>
+                                <span class="text-muted text-sm text-mono"
+                                      th:text="${#temporals.format(review.createdAt,'dd.MM.yyyy')}">01.01.2025</span>
+                            </div>
+                            <p class="text-sm" th:text="${review.comment}">Отличная машина</p>
+                        </div>
+                    </div>
+
+                    <div th:if="${reviews.isEmpty()}" class="empty-state" style="padding:32px">
+                        <div class="empty-state__icon">💬</div>
+                        <div class="empty-state__title" th:text="#{review.empty}">Пока нет отзывов</div>
+                    </div>
+
+                    <!-- Review pagination -->
+                    <div class="pagination" th:if="${totalReviewPages > 1}">
+                        <a th:href="@{/cars/{id}(id=${car.id},reviewPage=${reviewPage - 1})}"
+                           class="pagination__item"
+                           th:classappend="${reviewPage <= 1} ? 'disabled' : ''">‹</a>
+                        <th:block th:each="p : ${#numbers.sequence(1, totalReviewPages)}">
+                            <a th:href="@{/cars/{id}(id=${car.id},reviewPage=${p})}"
+                               class="pagination__item"
+                               th:classappend="${p == reviewPage} ? 'active' : ''"
+                               th:text="${p}">1</a>
+                        </th:block>
+                        <a th:href="@{/cars/{id}(id=${car.id},reviewPage=${reviewPage + 1})}"
+                           class="pagination__item"
+                           th:classappend="${reviewPage >= totalReviewPages} ? 'disabled' : ''">›</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: booking card -->
+            <div style="position:sticky;top:calc(var(--nav-height) + 24px)">
+                <div class="card card-body">
+                    <h2 style="font-size:1.4rem;margin-bottom:4px"
+                        th:text="${car.make + ' ' + car.model}">Toyota Camry</h2>
+                    <div class="text-mono text-muted text-sm mb-16"
+                         th:text="${car.year}">2022</div>
+
+                    <div class="flex-between mb-24" style="padding:16px;background:var(--bg-elevated);border-radius:var(--radius-sm)">
+                        <div>
+                            <div class="text-muted text-sm" th:text="#{cars.per.day.label}">Цена за день</div>
+                            <div class="price" style="font-size:1.5rem"
+                                 th:text="${#numbers.formatDecimal(car.pricePerDay,1,2) + ' BYN'}">75.00 BYN</div>
+                        </div>
+                        <span class="badge badge-available" th:text="#{status.available}">Свободна</span>
+                    </div>
+
+                    <!-- Alerts -->
+                    <div th:if="${param.error}" class="alert alert-error mb-16" data-dismiss="5000">
+                        <span>⚠</span><span th:text="${param.error}">Ошибка</span>
+                    </div>
+
+                    <!-- Booking form (only for logged-in users) -->
+                    <form th:if="${session.user != null}"
+                          th:action="@{/bookings/create}" method="post"
+                          class="form-stack" data-validate>
+
+                        <input type="hidden" name="carId" th:value="${car.id}"/>
+                        <input type="hidden" id="price-per-day"
+                               th:data-price="${car.pricePerDay}"/>
+
+                        <div class="form-group">
+                            <label class="form-label" th:text="#{booking.date.from}">Дата начала</label>
+                            <input class="form-control" type="date" name="dateFrom"
+                                   id="dateFrom" required/>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" th:text="#{booking.date.to}">Дата окончания</label>
+                            <input class="form-control" type="date" name="dateTo"
+                                   id="dateTo" required/>
+                        </div>
+
+                        <div style="padding:12px;background:var(--accent-soft);border-radius:var(--radius-sm);font-size:.85rem">
+                            <span class="text-muted" th:text="#{booking.total}">Итого: </span>
+                            <span class="price" id="calculated-price">—</span>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-full btn-lg"
+                                th:text="#{booking.create}">Забронировать</button>
+                    </form>
+
+                    <!-- Not logged in -->
+                    <div th:if="${session.user == null}" style="text-align:center">
+                        <p class="text-muted text-sm mb-16" th:text="#{booking.login.required}">
+                            Войдите чтобы забронировать
+                        </p>
+                        <a th:href="@{/login}" class="btn btn-primary btn-full"
+                           th:text="#{nav.login}">Войти</a>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<footer th:replace="~{fragments/base :: footer}"></footer>
+<script th:src="@{/static/js/main.js}"></script>
+</body>
+</html>

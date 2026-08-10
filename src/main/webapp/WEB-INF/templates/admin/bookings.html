@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/base :: head('Admin — Брони')}"></head>
+<body>
+<nav th:replace="~{fragments/base :: navbar}"></nav>
+
+<div class="page-content">
+    <div class="container">
+
+        <div class="section-header">
+            <div>
+                <h1>Admin — Брони</h1>
+                <p class="text-muted text-sm mt-8">Управление бронированиями</p>
+            </div>
+            <div class="flex gap-8">
+                <a th:href="@{/admin/cars}" class="btn btn-outline">Машины</a>
+            </div>
+        </div>
+
+        <!-- Status filter tabs -->
+        <div class="tabs mb-24">
+            <a th:href="@{/admin/bookings(status='PENDING')}"
+               class="tab" th:classappend="${selectedStatus == 'PENDING'} ? 'active' : ''">Ожидают</a>
+            <a th:href="@{/admin/bookings(status='CONFIRMED')}"
+               class="tab" th:classappend="${selectedStatus == 'CONFIRMED'} ? 'active' : ''">Подтверждены</a>
+            <a th:href="@{/admin/bookings(status='COMPLETED')}"
+               class="tab" th:classappend="${selectedStatus == 'COMPLETED'} ? 'active' : ''">Завершены</a>
+            <a th:href="@{/admin/bookings(status='CANCELLED')}"
+               class="tab" th:classappend="${selectedStatus == 'CANCELLED'} ? 'active' : ''">Отменены</a>
+        </div>
+
+        <div th:if="${param.success}" class="alert alert-success mb-24" data-dismiss="4000">
+            <span>✓</span><span th:text="${param.success}">Успешно</span>
+        </div>
+        <div th:if="${param.error}" class="alert alert-error mb-24" data-dismiss="5000">
+            <span>⚠</span><span th:text="${param.error}">Ошибка</span>
+        </div>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Пользователь</th>
+                    <th>Машина</th>
+                    <th>Даты</th>
+                    <th>Сумма</th>
+                    <th>Статус</th>
+                    <th>Действия</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="booking : ${bookings}">
+                    <td class="text-mono text-sm text-muted" th:text="${booking.id}">1</td>
+                    <td class="text-mono text-sm" th:text="${booking.userId}">1</td>
+                    <td class="text-mono text-sm" th:text="${booking.carId}">1</td>
+                    <td class="text-mono text-sm">
+                        <span th:text="${#temporals.format(booking.dateFrom,'dd.MM.yy')}">01.01.25</span>
+                        →
+                        <span th:text="${#temporals.format(booking.dateTo,'dd.MM.yy')}">07.01.25</span>
+                    </td>
+                    <td class="price text-mono"
+                        th:text="${#numbers.formatDecimal(booking.totalPrice,1,2) + ' BYN'}">450.00</td>
+                    <td>
+                            <span th:class="${'badge badge-' + booking.status.name().toLowerCase()}"
+                                  th:text="${booking.status.name()}">PENDING</span>
+                    </td>
+                    <td>
+                        <div class="flex gap-8">
+                            <form th:if="${booking.status.name() == 'PENDING'}"
+                                  th:action="@{/admin/bookings/confirm}" method="post">
+                                <input type="hidden" name="id" th:value="${booking.id}"/>
+                                <button type="submit" class="btn btn-primary btn-sm">Подтвердить</button>
+                            </form>
+                            <form th:if="${booking.status.name() == 'CONFIRMED'}"
+                                  th:action="@{/admin/bookings/complete}" method="post">
+                                <input type="hidden" name="id" th:value="${booking.id}"/>
+                                <button type="submit" class="btn btn-outline btn-sm">Завершить</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div th:if="${bookings.isEmpty()}" class="empty-state">
+            <div class="empty-state__icon">📋</div>
+            <div class="empty-state__title">Нет бронирований</div>
+        </div>
+
+        <div class="pagination" th:if="${totalPages > 1}">
+            <a th:href="@{/admin/bookings(page=${currentPage - 1},status=${selectedStatus})}"
+               class="pagination__item"
+               th:classappend="${currentPage <= 1} ? 'disabled' : ''">‹</a>
+            <th:block th:each="p : ${#numbers.sequence(1, totalPages)}">
+                <a th:href="@{/admin/bookings(page=${p},status=${selectedStatus})}"
+                   class="pagination__item"
+                   th:classappend="${p == currentPage} ? 'active' : ''"
+                   th:text="${p}">1</a>
+            </th:block>
+            <a th:href="@{/admin/bookings(page=${currentPage + 1},status=${selectedStatus})}"
+               class="pagination__item"
+               th:classappend="${currentPage >= totalPages} ? 'disabled' : ''">›</a>
+        </div>
+
+    </div>
+</div>
+
+<footer th:replace="~{fragments/base :: footer}"></footer>
+<script th:src="@{/static/js/main.js}"></script>
+</body>
+</html>

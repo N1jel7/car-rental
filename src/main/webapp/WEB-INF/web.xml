@@ -1,34 +1,49 @@
-<web-app xmlns="https://jakarta.ee/xml/ns/jakartaee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd" version="6.0">
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="https://jakarta.ee/xml/ns/jakartaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee
+             https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd"
+         version="6.0">
+
     <display-name>Car Rental Service</display-name>
+
     <listener>
         <listener-class>com.innowise.carrental.listener.AppContextListener</listener-class>
     </listener>
+
     <filter>
         <filter-name>EncodingFilter</filter-name>
         <filter-class>com.innowise.carrental.filter.EncodingFilter</filter-class>
     </filter>
+
     <filter-mapping>
         <filter-name>EncodingFilter</filter-name>
         <url-pattern>/*</url-pattern>
     </filter-mapping>
+
     <filter>
         <filter-name>XssFilter</filter-name>
         <filter-class>com.innowise.carrental.filter.XssFilter</filter-class>
     </filter>
+
     <filter-mapping>
         <filter-name>XssFilter</filter-name>
         <url-pattern>/*</url-pattern>
     </filter-mapping>
+
     <filter>
         <filter-name>AuthFilter</filter-name>
         <filter-class>com.innowise.carrental.filter.AuthFilter</filter-class>
     </filter>
+
     <filter-mapping>
         <filter-name>AuthFilter</filter-name>
         <url-pattern>/bookings/*</url-pattern>
     </filter-mapping>
+
     <filter-mapping>
         <filter-name>AuthFilter</filter-name>
         <url-pattern>/admin/*</url-pattern>
     </filter-mapping>
+
 </web-app>

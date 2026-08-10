@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/base :: head('Admin — Машины')}"></head>
+<body>
+<nav th:replace="~{fragments/base :: navbar}"></nav>
+
+<div class="page-content">
+    <div class="container">
+
+        <div class="section-header">
+            <div>
+                <h1>Admin — Машины</h1>
+                <p class="text-muted text-sm mt-8">Управление парком автомобилей</p>
+            </div>
+            <div class="flex gap-8">
+                <a th:href="@{/admin/bookings}" class="btn btn-outline">Брони</a>
+                <a th:href="@{/admin/cars/new}" class="btn btn-primary">+ Добавить машину</a>
+            </div>
+        </div>
+
+        <div th:if="${param.success}" class="alert alert-success mb-24" data-dismiss="4000">
+            <span>✓</span>
+            <span th:text="${param.success}">Успешно</span>
+        </div>
+        <div th:if="${param.error}" class="alert alert-error mb-24" data-dismiss="5000">
+            <span>⚠</span><span th:text="${param.error}">Ошибка</span>
+        </div>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Марка / Модель</th>
+                    <th>Год</th>
+                    <th>Цена/день</th>
+                    <th>Статус</th>
+                    <th>Действия</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="car : ${cars}">
+                    <td class="text-mono text-sm text-muted" th:text="${car.id}">1</td>
+                    <td style="font-weight:500" th:text="${car.make + ' ' + car.model}">Toyota Camry</td>
+                    <td class="text-mono text-sm" th:text="${car.year}">2022</td>
+                    <td class="price text-mono"
+                        th:text="${#numbers.formatDecimal(car.pricePerDay,1,2) + ' BYN'}">75.00</td>
+                    <td>
+                            <span th:class="${'badge badge-' + car.status.name().toLowerCase()}"
+                                  th:text="${car.status.name()}">AVAILABLE</span>
+                    </td>
+                    <td>
+                        <div class="flex gap-8">
+                            <a th:href="@{/admin/cars/edit(carId=${car.id})}"
+                               class="btn btn-ghost btn-sm">Изменить</a>
+                            <form th:action="@{/admin/cars/delete}" method="post"
+                                  onsubmit="return confirm('Удалить машину?')">
+                                <input type="hidden" name="carId" th:value="${car.id}"/>
+                                <button type="submit" class="btn btn-danger btn-sm">Удалить</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="pagination" th:if="${totalPages > 1}">
+            <a th:href="@{/admin/cars(page=${currentPage - 1})}"
+               class="pagination__item"
+               th:classappend="${currentPage <= 1} ? 'disabled' : ''">‹</a>
+            <th:block th:each="p : ${#numbers.sequence(1, totalPages)}">
+                <a th:href="@{/admin/cars(page=${p})}"
+                   class="pagination__item"
+                   th:classappend="${p == currentPage} ? 'active' : ''"
+                   th:text="${p}">1</a>
+            </th:block>
+            <a th:href="@{/admin/cars(page=${currentPage + 1})}"
+               class="pagination__item"
+               th:classappend="${currentPage >= totalPages} ? 'disabled' : ''">›</a>
+        </div>
+
+    </div>
+</div>
+
+<footer th:replace="~{fragments/base :: footer}"></footer>
+<script th:src="@{/static/js/main.js}"></script>
+</body>
+</html>

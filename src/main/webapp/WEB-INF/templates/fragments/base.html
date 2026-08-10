@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="head(title)">
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title th:text="${title} + ' — CarRental'">CarRental</title>
+    <script>
+        (function(){
+            var t=localStorage.getItem('cr-theme')||(window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
+            document.documentElement.setAttribute('data-theme',t);
+        })();
+    </script>
+    <link rel="stylesheet" th:href="@{/static/css/main.css}"/>
+</head>
+<body>
+<nav th:fragment="navbar" class="navbar">
+    <div class="container navbar__inner">
+        <a th:href="@{/cars}" class="navbar__logo">CarRental</a>
+        <button class="navbar__burger" id="nav-burger" aria-label="Menu" aria-expanded="false">
+            <span></span><span></span><span></span>
+        </button>
+        <ul class="navbar__nav" id="nav-links">
+            <li><a th:href="@{/cars}" th:text="#{nav.cars}">Машины</a></li>
+            <li th:if="${session.user != null}">
+                <a th:href="@{/bookings}" th:text="#{nav.myBookings}">Мои брони</a>
+            </li>
+            <li th:if="${session.user?.role?.name() == 'ADMIN'}">
+                <a th:href="@{/admin/bookings}">Admin</a>
+            </li>
+        </ul>
+        <div class="navbar__controls">
+            <div class="lang-switcher">
+                <a href="#" onclick="changeLocale('ru');return false;"
+                   th:classappend="${#locale.language=='ru'?'active':''}">RU</a>
+                <a href="#" onclick="changeLocale('en');return false;"
+                   th:classappend="${#locale.language=='en'?'active':''}">EN</a>
+                <a href="#" onclick="changeLocale('be');return false;"
+                   th:classappend="${#locale.language=='be'?'active':''}">BE</a>
+            </div>
+            <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">🌙</button>
+            <th:block th:if="${session.user == null}">
+                <a th:href="@{/login}" class="btn btn-outline btn-sm" th:text="#{nav.login}">Войти</a>
+                <a th:href="@{/register}" class="btn btn-primary btn-sm" th:text="#{nav.register}">Регистрация</a>
+            </th:block>
+            <th:block th:if="${session.user != null}">
+                <a th:href="@{/profile}" class="btn btn-ghost btn-sm"
+                   th:text="${session.user.fullName}">Профиль</a>
+                <form th:action="@{/logout}" method="post" style="display:inline">
+                    <button type="submit" class="btn btn-outline btn-sm"
+                            th:text="#{nav.logout}">Выйти</button>
+                </form>
+            </th:block>
+        </div>
+    </div>
+</nav>
+<footer th:fragment="footer" style="border-top:1px solid var(--border);padding:24px 0;margin-top:40px">
+    <div class="container flex-between" style="flex-wrap:wrap;gap:12px">
+        <span class="text-muted text-sm">© 2025 CarRental</span>
+        <span class="text-muted text-sm text-mono">v1.0</span>
+    </div>
+</footer>
+</body>
+</html>
