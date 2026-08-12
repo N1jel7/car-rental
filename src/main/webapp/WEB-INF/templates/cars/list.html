@@ -16,7 +16,7 @@
                     Выберите автомобиль для аренды
                 </p>
             </div>
-            <div th:if="${session.user?.role?.name() == 'ADMIN'}">
+            <div th:if="${session.user != null and session.user.role != null and session.user.role.name() == 'ADMIN'}">
                 <a th:href="@{/admin/cars/new}" class="btn btn-primary">
                     + <th:block th:text="#{cars.add}">Добавить машину</th:block>
                 </a>
@@ -32,6 +32,42 @@
             <span>⚠</span>
             <span th:text="${param.error}">Ошибка</span>
         </div>
+
+        <!-- Filters -->
+        <form method="get" th:action="@{/cars}" class="card card-body mb-24 cars-filter">
+            <div class="form-group cars-filter__field">
+                <label class="form-label" th:text="#{cars.filter.make}">Марка</label>
+                <input class="form-control" type="text" name="make"
+                       th:value="${filterMake}" th:placeholder="#{cars.filter.make.placeholder}"/>
+            </div>
+            <div class="form-group cars-filter__field cars-filter__field--narrow">
+                <label class="form-label" th:text="#{cars.filter.price.from}">Цена от</label>
+                <input class="form-control" type="number" name="minPrice" min="0" step="0.01"
+                       th:value="${filterMinPrice}"/>
+            </div>
+            <div class="form-group cars-filter__field cars-filter__field--narrow">
+                <label class="form-label" th:text="#{cars.filter.price.to}">Цена до</label>
+                <input class="form-control" type="number" name="maxPrice" min="0" step="0.01"
+                       th:value="${filterMaxPrice}"/>
+            </div>
+            <div class="form-group cars-filter__field cars-filter__field--narrow">
+                <label class="form-label" th:text="#{cars.filter.status}">Статус</label>
+                <select class="form-control" name="status">
+                    <option value="" th:selected="${filterStatus == null or filterStatus == ''}"
+                            th:text="#{cars.filter.status.all}">Все</option>
+                    <option value="available" th:selected="${filterStatus == 'available'}"
+                            th:text="#{status.available}">Свободна</option>
+                    <option value="occupied" th:selected="${filterStatus == 'occupied'}"
+                            th:text="#{status.booked}">Занята</option>
+                </select>
+            </div>
+            <div class="cars-filter__actions">
+                <button type="submit" class="btn btn-primary" th:text="#{cars.filter.apply}">Найти</button>
+                <a th:if="${filterMake != null or filterMinPrice != null or filterMaxPrice != null
+                            or (filterStatus != null and filterStatus != '')}"
+                   th:href="@{/cars}" class="btn btn-outline" th:text="#{cars.filter.reset}">Сбросить</a>
+            </div>
+        </form>
 
         <!-- Cars grid -->
         <div class="cars-grid" th:if="${!cars.isEmpty()}">
@@ -52,16 +88,26 @@
                 <div class="car-card__body">
                     <div class="car-card__title"
                          th:text="${car.make + ' ' + car.model}">Toyota Camry</div>
-                    <div class="car-card__year text-mono"
-                         th:text="${car.year}">2022</div>
+                    <div class="car-card__meta">
+                        <span class="car-card__year text-mono" th:text="${car.year}">2022</span>
+                        <span class="car-card__rating" th:if="${reviewCounts[car.id] != null and reviewCounts[car.id] > 0}">
+                            <span>★</span>
+                            <span th:text="${#numbers.formatDecimal(averageRatings[car.id], 1, 1)}">4.5</span>
+                            <span class="text-muted">(<span th:text="${reviewCounts[car.id]}">12</span>)</span>
+                        </span>
+                        <span class="car-card__rating car-card__rating--empty"
+                              th:if="${reviewCounts[car.id] == null or reviewCounts[car.id] == 0}"
+                              th:text="#{cars.no.reviews}">Нет отзывов</span>
+                    </div>
                     <div class="car-card__price">
-                        <span th:text="${#numbers.formatDecimal(car.pricePerDay, 1, 2)}">75.00</span>
-                        <span th:text="' ' + #{cars.per.day}"> BYN/день</span>
+                        <span class="car-card__price-value" th:text="${#numbers.formatDecimal(car.pricePerDay, 1, 2)}">75.00</span>
+                        <span class="car-card__price-unit" th:text="' ' + #{cars.per.day}"> BYN/день</span>
                     </div>
                 </div>
 
                 <div class="car-card__footer">
-                    <span class="badge badge-available" th:text="#{status.available}">Свободна</span>
+                    <span th:class="${car.status.name() == 'AVAILABLE'} ? 'badge badge-available' : 'badge badge-unavailable'"
+                          th:text="${car.status.name() == 'AVAILABLE'} ? #{status.available} : #{status.booked}">Свободна</span>
                     <a th:href="@{/cars/} + ${car.id}"
                        class="btn btn-outline btn-sm"
                        th:text="#{cars.details}"
@@ -84,19 +130,19 @@
 
         <!-- Pagination -->
         <div class="pagination" th:if="${totalPages > 1}">
-            <a th:href="@{/cars(page=${currentPage - 1})}"
+            <a th:href="@{/cars(page=${currentPage - 1},make=${filterMake},minPrice=${filterMinPrice},maxPrice=${filterMaxPrice},status=${filterStatus})}"
                class="pagination__item"
                th:classappend="${currentPage <= 1} ? 'disabled' : ''"
                th:aria-disabled="${currentPage <= 1}">‹</a>
 
             <th:block th:each="p : ${#numbers.sequence(1, totalPages)}">
-                <a th:href="@{/cars(page=${p})}"
+                <a th:href="@{/cars(page=${p},make=${filterMake},minPrice=${filterMinPrice},maxPrice=${filterMaxPrice},status=${filterStatus})}"
                    class="pagination__item"
                    th:classappend="${p == currentPage} ? 'active' : ''"
                    th:text="${p}">1</a>
             </th:block>
 
-            <a th:href="@{/cars(page=${currentPage + 1})}"
+            <a th:href="@{/cars(page=${currentPage + 1},make=${filterMake},minPrice=${filterMinPrice},maxPrice=${filterMaxPrice},status=${filterStatus})}"
                class="pagination__item"
                th:classappend="${currentPage >= totalPages} ? 'disabled' : ''"
                th:aria-disabled="${currentPage >= totalPages}">›</a>
@@ -106,6 +152,6 @@
 </div>
 
 <footer th:replace="~{fragments/base :: footer}"></footer>
-<script th:src="@{/static/js/main.js}"></script>
+<script th:src="@{/static/js/main.js(v=11)}"></script>
 </body>
 </html>

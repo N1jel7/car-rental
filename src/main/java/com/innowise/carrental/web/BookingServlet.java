@@ -8,25 +8,23 @@ import com.innowise.carrental.filter.AuthFilter;
 import com.innowise.carrental.service.BookingService;
 import com.innowise.carrental.util.ServletUtil;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.thymeleaf.context.WebContext;
 
 import java.io.IOException;
-import java.net.URLEncoder;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 
-@WebServlet("/bookings/*")
 public class BookingServlet extends HttpServlet {
 
     private static final Logger log = LoggerFactory.getLogger(BookingServlet.class);
-    private static final String BOOKINGS_PAGE = "/WEB-INF/templates/bookings/list.html";
+    private static final String BOOKINGS_PAGE = "bookings/list";
     private static final int PAGE_SIZE = 10;
 
     private BookingService bookingService;
@@ -79,16 +77,18 @@ public class BookingServlet extends HttpServlet {
             int total = bookingService.countByUser(user.getId());
             int totalPages = (int) Math.ceil((double) total / PAGE_SIZE);
 
-            request.setAttribute("bookings", bookings);
-            request.setAttribute("currentPage", page);
-            request.setAttribute("totalPages", totalPages);
-
-            request.getRequestDispatcher(BOOKINGS_PAGE).forward(request, response);
+            WebContext context = ServletUtil.buildWebContext(request, response, getServletContext());
+            context.setVariable("bookings", bookings);
+            context.setVariable("currentPage", page);
+            context.setVariable("totalPages", totalPages);
+            ServletUtil.render(BOOKINGS_PAGE, context, response, getServletContext());
 
         } catch (ServiceException e) {
             log.error("Failed to load bookings for userId={}", user.getId(), e);
-            request.setAttribute("error", "Failed to load bookings. Please try again.");
-            request.getRequestDispatcher(BOOKINGS_PAGE).forward(request, response);
+
+            WebContext context = ServletUtil.buildWebContext(request, response, getServletContext());
+            context.setVariable("error", "Failed to load bookings. Please try again.");
+            ServletUtil.render(BOOKINGS_PAGE, context, response, getServletContext());
         }
     }
 
@@ -114,19 +114,20 @@ public class BookingServlet extends HttpServlet {
 
         } catch (DateTimeParseException e) {
             response.sendRedirect(request.getContextPath()
-                    + "/cars/" + carIdParam + "?error=invalid_dates");
+                    + "/cars/" + carIdParam + "?error=" + ServletUtil.encode("Please select valid dates"));
 
         } catch (ValidationException e) {
             response.sendRedirect(request.getContextPath()
-                    + "/cars/" + carIdParam + "?error=" + encode(e.getMessage()));
+                    + "/cars/" + carIdParam + "?error=" + ServletUtil.encode(e.getMessage()));
 
         } catch (NumberFormatException e) {
-            response.sendRedirect(request.getContextPath() + "/cars?error=invalid_car");
+            response.sendRedirect(request.getContextPath()
+                    + "/cars?error=" + ServletUtil.encode("Invalid car"));
 
         } catch (ServiceException e) {
             log.error("Failed to create booking userId={} carId={}", user.getId(), carIdParam, e);
             response.sendRedirect(request.getContextPath()
-                    + "/cars/" + carIdParam + "?error=booking_failed");
+                    + "/cars/" + carIdParam + "?error=" + ServletUtil.encode("Failed to create the booking. Please try again"));
         }
     }
 
@@ -146,30 +147,22 @@ public class BookingServlet extends HttpServlet {
 
         } catch (ValidationException e) {
             response.sendRedirect(request.getContextPath()
-                    + "/bookings?error=" + encode(e.getMessage()));
+                    + "/bookings?error=" + ServletUtil.encode(e.getMessage()));
 
         } catch (NumberFormatException e) {
             response.sendRedirect(request.getContextPath()
-                    + "/bookings?error=invalid_booking");
+                    + "/bookings?error=" + ServletUtil.encode("Invalid booking"));
 
         } catch (ServiceException e) {
             log.error("Failed to cancel booking id={} userId={}", bookingIdParam, user.getId(), e);
             response.sendRedirect(request.getContextPath()
-                    + "/bookings?error=cancel_failed");
+                    + "/bookings?error=" + ServletUtil.encode("Failed to cancel the booking. Please try again"));
         }
     }
 
     private User getSessionUser(HttpServletRequest request) {
         HttpSession session = request.getSession(false);
         return (User) session.getAttribute(AuthFilter.SESSION_USER);
-    }
-
-    private String encode(String value) {
-        try {
-            return URLEncoder.encode(value, "UTF-8");
-        } catch (Exception e) {
-            return "error";
-        }
     }
 
 }

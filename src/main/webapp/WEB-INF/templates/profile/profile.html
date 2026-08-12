@@ -7,7 +7,14 @@
 <div class="page-content">
     <div class="container" style="max-width:640px">
 
-        <h1 class="mb-24">Профиль</h1>
+        <div class="flex gap-16" style="align-items:center;margin-bottom:24px">
+            <span class="avatar avatar--lg"
+                  th:text="${#strings.isEmpty(session.user.fullName)} ? '?' : ${#strings.toUpperCase(#strings.substring(session.user.fullName,0,1))}">И</span>
+            <div>
+                <h1 style="margin-bottom:4px">Профиль</h1>
+                <span class="text-muted text-sm" th:text="${session.user.fullName}">Иван Петров</span>
+            </div>
+        </div>
 
         <div th:if="${param.success}" class="alert alert-success mb-24" data-dismiss="4000">
             <span>✓</span>
@@ -87,6 +94,6 @@
 </div>
 
 <footer th:replace="~{fragments/base :: footer}"></footer>
-<script th:src="@{/static/js/main.js}"></script>
+<script th:src="@{/static/js/main.js(v=11)}"></script>
 </body>
 </html>

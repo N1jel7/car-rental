@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+
+    <Properties>
+        <Property name="LOG_DIR">logs</Property>
+        <Property name="ARCHIVE_LOG_DIR">${LOG_DIR}/archive</Property>
+        <Property name="LOG_PATTERN">%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n</Property>
+    </Properties>
+
+    <Appenders>
+        <Console name="Console">
+            <PatternLayout pattern="${LOG_PATTERN}"/>
+        </Console>
+
+        <RollingFile name="FileRolling"
+                     fileName="${LOG_DIR}/log.txt"
+                     filePattern="${ARCHIVE_LOG_DIR}/%d{yyyy-MM-dd}/%d{yyyy-MM-dd_HH-mm}_%i.log">
+
+            <Policies>
+                <SizeBasedTriggeringPolicy size="15 KB"/>
+            </Policies>
+
+            <PatternLayout pattern="${LOG_PATTERN}"/>
+            <DefaultRolloverStrategy max="10"/>
+        </RollingFile>
+    </Appenders>
+
+    <Loggers>
+        <Root level="debug">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="FileRolling"/>
+        </Root>
+    </Loggers>
+
+</Configuration>

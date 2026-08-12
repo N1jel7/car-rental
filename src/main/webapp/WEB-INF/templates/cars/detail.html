@@ -15,22 +15,39 @@
 
             <!-- Left: images + reviews -->
             <div>
-                <!-- Primary image -->
-                <div style="border-radius:var(--radius-md);overflow:hidden;background:var(--bg-elevated);margin-bottom:16px;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center">
-                    <img th:if="${!images.isEmpty()}"
-                         th:src="@{/uploads/} + ${images[0].filePath}"
-                         th:alt="${car.make + ' ' + car.model}"
-                         style="width:100%;height:100%;object-fit:cover"/>
-                    <span th:if="${images.isEmpty()}" style="font-size:4rem">🚗</span>
+                <!-- Photo carousel -->
+                <div class="car-gallery" id="car-gallery" th:if="${!images.isEmpty()}">
+                    <div class="car-gallery__track" id="car-gallery-track">
+                        <div class="car-gallery__slide" th:each="img : ${images}">
+                            <img th:src="@{/uploads/} + ${img.filePath}"
+                                 th:alt="${car.make + ' ' + car.model}"/>
+                        </div>
+                    </div>
+
+                    <button th:if="${images.size() > 1}" type="button"
+                            class="car-gallery__nav car-gallery__nav--prev"
+                            aria-label="Предыдущее фото" onclick="carGalleryPrev()">‹</button>
+                    <button th:if="${images.size() > 1}" type="button"
+                            class="car-gallery__nav car-gallery__nav--next"
+                            aria-label="Следующее фото" onclick="carGalleryNext()">›</button>
+
+                    <span th:if="${images.size() > 1}" class="car-gallery__counter" id="car-gallery-counter">
+                        1 / <span th:text="${images.size()}">1</span>
+                    </span>
+                </div>
+
+                <div th:if="${images.isEmpty()}"
+                     style="border-radius:var(--radius-md);overflow:hidden;background:var(--bg-elevated);margin-bottom:16px;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center">
+                    <span style="font-size:4rem">🚗</span>
                 </div>
 
                 <!-- Thumbnail gallery -->
-                <div th:if="${images.size() > 1}"
-                     style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px">
-                    <img th:each="img : ${images}"
+                <div th:if="${images.size() > 1}" class="car-gallery__thumbs">
+                    <img th:each="img, iter : ${images}"
                          th:src="@{/uploads/} + ${img.filePath}"
-                         style="width:80px;height:60px;object-fit:cover;border-radius:var(--radius-sm);border:1px solid var(--border);cursor:pointer"
-                         onclick="document.querySelector('.main-img').src=this.src"/>
+                         class="car-gallery__thumb"
+                         th:classappend="${iter.index == 0} ? 'active' : ''"
+                         th:onclick="|carGalleryGoTo(${iter.index})|"/>
                 </div>
 
                 <div class="divider"></div>
@@ -89,13 +106,20 @@
                     <div th:if="${!reviews.isEmpty()}" style="display:flex;flex-direction:column;gap:16px">
                         <div th:each="review : ${reviews}" class="card card-body">
                             <div class="flex-between mb-8">
-                                <div class="stars">
-                                    <th:block th:each="i : ${#numbers.sequence(1,5)}">
-                                        <span th:classappend="${i <= review.rating} ? '' : 'empty'">★</span>
-                                    </th:block>
+                                <div class="flex gap-8" style="align-items:center">
+                                    <span class="avatar avatar--sm"
+                                          th:text="${reviewAuthors[review.userId] != null and !#strings.isEmpty(reviewAuthors[review.userId].fullName)}
+                                                    ? ${#strings.toUpperCase(#strings.substring(reviewAuthors[review.userId].fullName,0,1))} : '?'">И</span>
+                                    <span class="text-sm" style="font-weight:600"
+                                          th:text="${reviewAuthors[review.userId] != null} ? ${reviewAuthors[review.userId].fullName} : #{review.author.unknown}">Иван Петров</span>
                                 </div>
                                 <span class="text-muted text-sm text-mono"
                                       th:text="${#temporals.format(review.createdAt,'dd.MM.yyyy')}">01.01.2025</span>
+                            </div>
+                            <div class="stars mb-8">
+                                <th:block th:each="i : ${#numbers.sequence(1,5)}">
+                                    <span th:classappend="${i <= review.rating} ? '' : 'empty'">★</span>
+                                </th:block>
                             </div>
                             <p class="text-sm" th:text="${review.comment}">Отличная машина</p>
                         </div>
@@ -142,6 +166,9 @@
                     </div>
 
                     <!-- Alerts -->
+                    <div th:if="${param.success == 'review_created'}" class="alert alert-success mb-16" data-dismiss="4000">
+                        <span>✓</span><span th:text="#{review.created}">Отзыв отправлен</span>
+                    </div>
                     <div th:if="${param.error}" class="alert alert-error mb-16" data-dismiss="5000">
                         <span>⚠</span><span th:text="${param.error}">Ошибка</span>
                     </div>
@@ -191,6 +218,6 @@
 </div>
 
 <footer th:replace="~{fragments/base :: footer}"></footer>
-<script th:src="@{/static/js/main.js}"></script>
+<script th:src="@{/static/js/main.js(v=11)}"></script>
 </body>
 </html>

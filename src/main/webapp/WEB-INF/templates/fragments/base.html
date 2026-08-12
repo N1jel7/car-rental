@@ -10,7 +10,7 @@
             document.documentElement.setAttribute('data-theme',t);
         })();
     </script>
-    <link rel="stylesheet" th:href="@{/static/css/main.css}"/>
+    <link rel="stylesheet" th:href="@{/static/css/main.css(v=14)}"/>
 </head>
 <body>
 <nav th:fragment="navbar" class="navbar">
@@ -24,7 +24,7 @@
             <li th:if="${session.user != null}">
                 <a th:href="@{/bookings}" th:text="#{nav.myBookings}">Мои брони</a>
             </li>
-            <li th:if="${session.user?.role?.name() == 'ADMIN'}">
+            <li th:if="${session.user != null and session.user.role != null and session.user.role.name() == 'ADMIN'}">
                 <a th:href="@{/admin/bookings}">Admin</a>
             </li>
         </ul>
@@ -43,8 +43,11 @@
                 <a th:href="@{/register}" class="btn btn-primary btn-sm" th:text="#{nav.register}">Регистрация</a>
             </th:block>
             <th:block th:if="${session.user != null}">
-                <a th:href="@{/profile}" class="btn btn-ghost btn-sm"
-                   th:text="${session.user.fullName}">Профиль</a>
+                <a th:href="@{/profile}" class="navbar__profile">
+                    <span class="avatar avatar--sm"
+                          th:text="${#strings.isEmpty(session.user.fullName)} ? '?' : ${#strings.toUpperCase(#strings.substring(session.user.fullName,0,1))}">И</span>
+                    <span class="btn btn-ghost btn-sm" th:text="${session.user.fullName}">Профиль</span>
+                </a>
                 <form th:action="@{/logout}" method="post" style="display:inline">
                     <button type="submit" class="btn btn-outline btn-sm"
                             th:text="#{nav.logout}">Выйти</button>
@@ -55,7 +58,7 @@
 </nav>
 <footer th:fragment="footer" style="border-top:1px solid var(--border);padding:24px 0;margin-top:40px">
     <div class="container flex-between" style="flex-wrap:wrap;gap:12px">
-        <span class="text-muted text-sm">© 2025 CarRental</span>
+        <span class="text-muted text-sm">© 2026 CarRental</span>
         <span class="text-muted text-sm text-mono">v1.0</span>
     </div>
 </footer>

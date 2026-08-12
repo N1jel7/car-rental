@@ -8,6 +8,7 @@ import com.innowise.carrental.exception.DaoException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -149,6 +150,102 @@ public class CarDaoImpl implements CarDao {
         }
 
         return cars;
+    }
+
+    @Override
+    public List<Car> search(String make, BigDecimal minPrice, BigDecimal maxPrice,
+                             Boolean availableOnly, int offset, int limit) throws DaoException {
+        List<Car> cars = new ArrayList<>();
+
+        StringBuilder sql = new StringBuilder("""
+                SELECT id, make, model, year, price_per_day, status, description, created_at
+                FROM cars
+                """);
+        List<Object> params = new ArrayList<>();
+        appendSearchConditions(sql, params, make, minPrice, maxPrice, availableOnly);
+        sql.append(" ORDER BY created_at DESC LIMIT ? OFFSET ?");
+        params.add(limit);
+        params.add(offset);
+
+        try (Connection connection = ConnectionPool.getInstance().getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql.toString())) {
+
+            bindParams(statement, params);
+
+            try (ResultSet rs = statement.executeQuery()) {
+                while (rs.next()) {
+                    cars.add(mapRow(rs));
+                }
+            }
+
+        } catch (SQLException e) {
+            log.error("Failed to search cars make={} minPrice={} maxPrice={} availableOnly={}",
+                    make, minPrice, maxPrice, availableOnly, e);
+            throw new DaoException("Failed to search cars", e);
+        }
+
+        return cars;
+    }
+
+    @Override
+    public int countSearch(String make, BigDecimal minPrice, BigDecimal maxPrice,
+                            Boolean availableOnly) throws DaoException {
+        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM cars");
+        List<Object> params = new ArrayList<>();
+        appendSearchConditions(sql, params, make, minPrice, maxPrice, availableOnly);
+
+        try (Connection connection = ConnectionPool.getInstance().getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql.toString())) {
+
+            bindParams(statement, params);
+
+            try (ResultSet rs = statement.executeQuery()) {
+                return rs.next() ? rs.getInt(1) : 0;
+            }
+
+        } catch (SQLException e) {
+            log.error("Failed to count car search make={} minPrice={} maxPrice={} availableOnly={}",
+                    make, minPrice, maxPrice, availableOnly, e);
+            throw new DaoException("Failed to count car search", e);
+        }
+    }
+
+    private void appendSearchConditions(StringBuilder sql, List<Object> params, String make,
+                                         BigDecimal minPrice, BigDecimal maxPrice, Boolean availableOnly) {
+        List<String> conditions = new ArrayList<>();
+
+        if (make != null && !make.isBlank()) {
+            conditions.add("LOWER(make) LIKE LOWER(?)");
+            params.add("%" + make + "%");
+        }
+        if (minPrice != null) {
+            conditions.add("price_per_day >= ?");
+            params.add(minPrice);
+        }
+        if (maxPrice != null) {
+            conditions.add("price_per_day <= ?");
+            params.add(maxPrice);
+        }
+        if (availableOnly != null) {
+            conditions.add(availableOnly ? "status = 'AVAILABLE'" : "status != 'AVAILABLE'");
+        }
+
+        if (!conditions.isEmpty()) {
+            sql.append(" WHERE ").append(String.join(" AND ", conditions));
+        }
+    }
+
+    private void bindParams(PreparedStatement statement, List<Object> params) throws SQLException {
+        for (int i = 0; i < params.size(); i++) {
+            Object param = params.get(i);
+            if (param instanceof BigDecimal bd) {
+                statement.setBigDecimal(i + 1, bd);
+            } else if (param instanceof Integer n) {
+                statement.setInt(i + 1, n);
+            } else {
+                statement.setString(i + 1, param.toString());
+            }
+        }
     }
 
     @Override

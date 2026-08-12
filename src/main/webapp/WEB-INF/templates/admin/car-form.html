@@ -22,20 +22,55 @@
 
         <div class="card card-body">
             <form th:action="${car != null} ? @{/admin/cars/update} : @{/admin/cars/create}"
-                  method="post" class="form-stack" data-validate>
+                  method="post" enctype="multipart/form-data" class="form-stack" data-validate>
 
                 <input th:if="${car != null}" type="hidden" name="carId" th:value="${car.id}"/>
+
+                <!-- Existing photos (edit mode only) -->
+                <div class="form-group" th:if="${car != null}">
+                    <label class="form-label">Текущие фото</label>
+
+                    <div th:if="${images.isEmpty()}" class="text-muted text-sm mb-8">
+                        Фото ещё не загружены
+                    </div>
+
+                    <div th:if="${!images.isEmpty()}" class="image-manager-grid">
+                        <div th:each="img : ${images}" class="image-manager-item"
+                             th:classappend="${img.primary} ? 'image-manager-item--primary' : ''">
+                            <img th:src="@{/uploads/} + ${img.filePath}" th:alt="${img.filePath}"/>
+                            <label class="image-manager-item__primary">
+                                <input type="radio" name="primarySelection"
+                                       th:value="'existing:' + ${img.id}" th:checked="${img.primary}"/>
+                                <span>Главное</span>
+                            </label>
+                            <label class="image-manager-item__delete">
+                                <input type="checkbox" name="deleteImages" th:value="${img.id}"/>
+                                <span>Удалить</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" th:text="${car != null} ? 'Добавить фото' : 'Фото машины'">
+                        Фото машины
+                    </label>
+                    <input class="form-control" type="file" name="images" id="new-images-input" multiple
+                           accept=".jpg,.jpeg,.png,.webp"/>
+                    <div class="text-muted text-sm mt-8">Максимум 10 фото на машину</div>
+                    <div class="image-manager-grid mt-8" id="new-images-preview"></div>
+                </div>
 
                 <div class="form-row">
                     <div class="form-group">
                         <label class="form-label">Марка</label>
                         <input class="form-control" type="text" name="make"
-                               th:value="${car?.make}" placeholder="Toyota" required/>
+                               th:value="${car != null ? car.make : ''}" placeholder="Toyota" required/>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Модель</label>
                         <input class="form-control" type="text" name="model"
-                               th:value="${car?.model}" placeholder="Camry" required/>
+                               th:value="${car != null ? car.model : ''}" placeholder="Camry" required/>
                     </div>
                 </div>
 
@@ -43,13 +78,13 @@
                     <div class="form-group">
                         <label class="form-label">Год выпуска</label>
                         <input class="form-control" type="number" name="year"
-                               th:value="${car?.year}" placeholder="2022"
+                               th:value="${car != null ? car.year : ''}" placeholder="2022"
                                min="1900" max="2026" required/>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Цена за день (BYN)</label>
                         <input class="form-control" type="number" name="pricePerDay"
-                               th:value="${car?.pricePerDay}"
+                               th:value="${car != null ? car.pricePerDay : ''}"
                                placeholder="75.00" step="0.01" min="0.01" required/>
                     </div>
                 </div>
@@ -58,7 +93,7 @@
                     <label class="form-label">Описание</label>
                     <textarea class="form-control" name="description" rows="4"
                               placeholder="Комфортный седан бизнес-класса..."
-                              th:text="${car?.description}"></textarea>
+                              th:text="${car != null ? car.description : ''}"></textarea>
                 </div>
 
                 <div style="display:flex;justify-content:flex-end;gap:12px">
@@ -75,6 +110,6 @@
 </div>
 
 <footer th:replace="~{fragments/base :: footer}"></footer>
-<script th:src="@{/static/js/main.js}"></script>
+<script th:src="@{/static/js/main.js(v=11)}"></script>
 </body>
 </html>

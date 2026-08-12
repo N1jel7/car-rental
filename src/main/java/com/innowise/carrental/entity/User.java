@@ -10,7 +10,6 @@ public class User {
     private String passwordHash;
     private String fullName;
     private String phone;
-    private String avatarPath;
     private Role role;
     private String locale;
     private LocalDateTime createdAt;
@@ -19,14 +18,13 @@ public class User {
     }
 
     public User(Long id, String email, String passwordHash, String fullName,
-                String phone, String avatarPath, Role role, String locale,
+                String phone, Role role, String locale,
                 LocalDateTime createdAt) {
         this.id = id;
         this.email = email;
         this.passwordHash = passwordHash;
         this.fullName = fullName;
         this.phone = phone;
-        this.avatarPath = avatarPath;
         this.role = role;
         this.locale = locale;
         this.createdAt = createdAt;
@@ -70,14 +68,6 @@ public class User {
 
     public void setPhone(String phone) {
         this.phone = phone;
-    }
-
-    public String getAvatarPath() {
-        return avatarPath;
-    }
-
-    public void setAvatarPath(String avatarPath) {
-        this.avatarPath = avatarPath;
     }
 
     public Role getRole() {

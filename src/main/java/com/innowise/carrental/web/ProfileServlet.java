@@ -5,22 +5,22 @@ import com.innowise.carrental.exception.ServiceException;
 import com.innowise.carrental.exception.ValidationException;
 import com.innowise.carrental.filter.AuthFilter;
 import com.innowise.carrental.service.UserService;
+import com.innowise.carrental.util.ServletUtil;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.thymeleaf.context.WebContext;
 
 import java.io.IOException;
 
-@WebServlet("/profile/*")
 public class ProfileServlet extends HttpServlet {
 
     private static final Logger log = LoggerFactory.getLogger(ProfileServlet.class);
-    private static final String PROFILE_PAGE = "/WEB-INF/templates/profile/profile.html";
+    private static final String PROFILE_PAGE = "profile/profile";
 
     private UserService userService;
 
@@ -33,7 +33,8 @@ public class ProfileServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        request.getRequestDispatcher(PROFILE_PAGE).forward(request, response);
+        WebContext context = ServletUtil.buildWebContext(request, response, getServletContext());
+        ServletUtil.render(PROFILE_PAGE, context, response, getServletContext());
     }
 
     @Override
@@ -71,12 +72,12 @@ public class ProfileServlet extends HttpServlet {
 
         } catch (ValidationException e) {
             response.sendRedirect(request.getContextPath()
-                    + "/profile?error=" + encode(e.getMessage()));
+                    + "/profile?error=" + ServletUtil.encode(e.getMessage()));
 
         } catch (ServiceException e) {
             log.error("Failed to update profile userId={}", user.getId(), e);
             response.sendRedirect(request.getContextPath()
-                    + "/profile?error=update_failed");
+                    + "/profile?error=" + ServletUtil.encode("Failed to update profile. Please try again"));
         }
     }
 
@@ -92,7 +93,7 @@ public class ProfileServlet extends HttpServlet {
         try {
             if (!newPassword.equals(confirmPassword)) {
                 response.sendRedirect(request.getContextPath()
-                        + "/profile?error=passwords_do_not_match");
+                        + "/profile?error=" + ServletUtil.encode("New passwords do not match"));
                 return;
             }
 
@@ -105,26 +106,18 @@ public class ProfileServlet extends HttpServlet {
 
         } catch (ValidationException e) {
             response.sendRedirect(request.getContextPath()
-                    + "/profile?error=" + encode(e.getMessage()));
+                    + "/profile?error=" + ServletUtil.encode(e.getMessage()));
 
         } catch (ServiceException e) {
             log.error("Failed to change password userId={}", user.getId(), e);
             response.sendRedirect(request.getContextPath()
-                    + "/profile?error=password_change_failed");
+                    + "/profile?error=" + ServletUtil.encode("Failed to change password. Please try again"));
         }
     }
 
     private User getSessionUser(HttpServletRequest request) {
         HttpSession session = request.getSession(false);
         return (User) session.getAttribute(AuthFilter.SESSION_USER);
-    }
-
-    private String encode(String value) {
-        try {
-            return java.net.URLEncoder.encode(value, "UTF-8");
-        } catch (Exception e) {
-            return "error";
-        }
     }
 
 }

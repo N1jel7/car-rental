@@ -50,6 +50,10 @@ public class CarImageDaoImpl implements CarImageDao {
             UPDATE car_images SET is_primary = false WHERE car_id = ?
             """;
 
+    private static final String SET_PRIMARY = """
+            UPDATE car_images SET is_primary = true WHERE id = ?
+            """;
+
     @Override
     public Optional<CarImage> findById(long id) throws DaoException {
         try (Connection connection = ConnectionPool.getInstance().getConnection();
@@ -190,6 +194,37 @@ public class CarImageDaoImpl implements CarImageDao {
     @Override
     public void update(CarImage image) throws DaoException {
         throw new UnsupportedOperationException("Images are not updated — delete and re-upload instead");
+    }
+
+    @Override
+    public void setPrimary(long imageId, long carId) throws DaoException {
+        try (Connection connection = ConnectionPool.getInstance().getConnection()) {
+
+            connection.setAutoCommit(false);
+
+            try (PreparedStatement resetStatement = connection.prepareStatement(RESET_PRIMARY);
+                 PreparedStatement setStatement = connection.prepareStatement(SET_PRIMARY)) {
+
+                resetStatement.setLong(1, carId);
+                resetStatement.executeUpdate();
+
+                setStatement.setLong(1, imageId);
+                setStatement.executeUpdate();
+
+                connection.commit();
+
+            } catch (SQLException e) {
+                connection.rollback();
+                log.error("Failed to set primary image id={} carId={}", imageId, carId, e);
+                throw new DaoException("Failed to set primary image", e);
+            } finally {
+                connection.setAutoCommit(true);
+            }
+
+        } catch (SQLException e) {
+            log.error("Failed to get connection for setting primary image", e);
+            throw new DaoException("Failed to get connection", e);
+        }
     }
 
     @Override

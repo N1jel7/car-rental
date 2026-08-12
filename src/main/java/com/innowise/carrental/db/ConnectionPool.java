@@ -1,6 +1,7 @@
 package com.innowise.carrental.db;
 
 import com.innowise.carrental.exception.DaoException;
+import org.postgresql.Driver;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -33,6 +34,12 @@ public final class ConnectionPool {
 
         this.availableConnections = new LinkedBlockingQueue<>(size);
         this.allConnections = new ArrayList<>(size);
+
+        try {
+            Class.forName(Driver.class.getName());
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
 
         try {
             for (int i = 0; i < size; i++) {

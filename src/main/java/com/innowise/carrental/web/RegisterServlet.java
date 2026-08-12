@@ -5,22 +5,22 @@ import com.innowise.carrental.exception.ServiceException;
 import com.innowise.carrental.exception.ValidationException;
 import com.innowise.carrental.filter.AuthFilter;
 import com.innowise.carrental.service.UserService;
+import com.innowise.carrental.util.ServletUtil;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.thymeleaf.context.WebContext;
 
 import java.io.IOException;
 
-@WebServlet("/register")
 public class RegisterServlet extends HttpServlet {
 
     private static final Logger log = LoggerFactory.getLogger(RegisterServlet.class);
-    private static final String REGISTER_PAGE = "/WEB-INF/templates/auth/register.html";
+    private static final String REGISTER_PAGE = "auth/register";
 
     private UserService userService;
 
@@ -39,7 +39,8 @@ public class RegisterServlet extends HttpServlet {
             return;
         }
 
-        request.getRequestDispatcher(REGISTER_PAGE).forward(request, response);
+        WebContext context = ServletUtil.buildWebContext(request, response, getServletContext());
+        ServletUtil.render(REGISTER_PAGE, context, response, getServletContext());
     }
 
     @Override
@@ -54,8 +55,7 @@ public class RegisterServlet extends HttpServlet {
         try {
             User user = userService.register(email, password, fullName, phone);
 
-            // Log in immediately after registration — no need to make
-            // the user fill in the login form right after signing up.
+            // Log in immediately after registration
             HttpSession session = request.getSession(true);
             session.setAttribute(AuthFilter.SESSION_USER, user);
 
@@ -63,17 +63,20 @@ public class RegisterServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/cars");
 
         } catch (ValidationException e) {
-            // Send form values back so the user doesn't have to retype everything
-            request.setAttribute("error", e.getMessage());
-            request.setAttribute("email", email);
-            request.setAttribute("fullName", fullName);
-            request.setAttribute("phone", phone);
-            request.getRequestDispatcher(REGISTER_PAGE).forward(request, response);
+            WebContext context = ServletUtil.buildWebContext(request, response, getServletContext());
+            context.setVariable("error", e.getMessage());
+            context.setVariable("email", email);
+            context.setVariable("fullName", fullName);
+            context.setVariable("phone", phone);
+            ServletUtil.render(REGISTER_PAGE, context, response, getServletContext());
+
 
         } catch (ServiceException e) {
             log.error("Registration service error email={}", email, e);
-            request.setAttribute("error", "Something went wrong. Please try again.");
-            request.getRequestDispatcher(REGISTER_PAGE).forward(request, response);
+
+            WebContext context = ServletUtil.buildWebContext(request, response, getServletContext());
+            context.setVariable("error", "Something went wrong. Please try again.");
+            ServletUtil.render(REGISTER_PAGE, context, response, getServletContext());
         }
     }
 

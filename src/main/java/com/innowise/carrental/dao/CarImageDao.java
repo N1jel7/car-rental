@@ -17,4 +17,7 @@ public interface CarImageDao extends BaseDao<CarImage> {
 
     void deleteByCarId(long carId) throws DaoException;
 
+    // Marks the given image as primary for its car, resetting all others.
+    void setPrimary(long imageId, long carId) throws DaoException;
+
 }

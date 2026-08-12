@@ -6,35 +6,39 @@ import com.innowise.carrental.filter.AuthFilter;
 import com.innowise.carrental.service.BookingService;
 import com.innowise.carrental.service.CarService;
 import com.innowise.carrental.service.ReviewService;
+import com.innowise.carrental.service.UserService;
 import com.innowise.carrental.util.ServletUtil;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.thymeleaf.context.WebContext;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-@WebServlet("/cars/*")
 public class CarDetailServlet extends HttpServlet {
 
     private static final Logger log = LoggerFactory.getLogger(CarDetailServlet.class);
-    private static final String DETAIL_PAGE = "/WEB-INF/templates/cars/detail.html";
+    private static final String DETAIL_PAGE = "cars/detail";
     private static final int REVIEWS_PAGE_SIZE = 5;
 
     private CarService carService;
     private BookingService bookingService;
     private ReviewService reviewService;
+    private UserService userService;
 
     @Override
     public void init() {
         carService = new CarService();
         bookingService = new BookingService();
         reviewService = new ReviewService();
+        userService = new UserService();
     }
 
     @Override
@@ -48,6 +52,8 @@ public class CarDetailServlet extends HttpServlet {
 
         int reviewPage = ServletUtil.parsePageParam(request.getParameter("reviewPage"));
 
+        WebContext context = ServletUtil.buildWebContext(request, response, getServletContext());
+
         try {
             Car car = carService.findById(carId);
             List<CarImage> images = carService.findImages(carId);
@@ -56,12 +62,24 @@ public class CarDetailServlet extends HttpServlet {
             int totalReviewPages = (int) Math.ceil((double) totalReviews / REVIEWS_PAGE_SIZE);
             double averageRating = reviewService.getAverageRating(carId);
 
-            request.setAttribute("car", car);
-            request.setAttribute("images", images);
-            request.setAttribute("reviews", reviews);
-            request.setAttribute("averageRating", averageRating);
-            request.setAttribute("reviewPage", reviewPage);
-            request.setAttribute("totalReviewPages", totalReviewPages);
+            Map<Long, User> reviewAuthors = new HashMap<>();
+            for (Review review : reviews) {
+                reviewAuthors.computeIfAbsent(review.getUserId(), id -> {
+                    try {
+                        return userService.findById(id);
+                    } catch (ServiceException e) {
+                        return null;
+                    }
+                });
+            }
+
+            context.setVariable("car", car);
+            context.setVariable("images", images);
+            context.setVariable("reviews", reviews);
+            context.setVariable("reviewAuthors", reviewAuthors);
+            context.setVariable("averageRating", averageRating);
+            context.setVariable("reviewPage", reviewPage);
+            context.setVariable("totalReviewPages", totalReviewPages);
 
             // Check if the logged-in user has a completed booking for this car
             HttpSession session = request.getSession(false);
@@ -83,18 +101,18 @@ public class CarDetailServlet extends HttpServlet {
                                 }
                             });
 
-                    request.setAttribute("canReview", canReview);
+                    context.setVariable("canReview", canReview);
 
                     // Find the completed booking id to attach the review to
                     userBookings.stream()
                             .filter(b -> b.getCarId().equals(carId))
                             .filter(b -> b.getStatus() == BookingStatus.COMPLETED)
                             .findFirst()
-                            .ifPresent(b -> request.setAttribute("completedBookingId", b.getId()));
+                            .ifPresent(b -> context.setVariable("completedBookingId", b.getId()));
                 }
             }
 
-            request.getRequestDispatcher(DETAIL_PAGE).forward(request, response);
+            ServletUtil.render(DETAIL_PAGE, context, response, getServletContext());
 
         } catch (ServiceException e) {
             log.error("Failed to load car detail carId={}", carId, e);

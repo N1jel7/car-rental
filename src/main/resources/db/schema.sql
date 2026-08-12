@@ -5,7 +5,6 @@ CREATE TABLE users
     password_hash VARCHAR(60)         NOT NULL,
     full_name     VARCHAR(100)        NOT NULL,
     phone         VARCHAR(20),
-    avatar_path   VARCHAR(255),
     role          VARCHAR(10)         NOT NULL DEFAULT 'USER',
     locale        VARCHAR(5)          NOT NULL DEFAULT 'ru',
     created_at    TIMESTAMP           NOT NULL DEFAULT NOW(),

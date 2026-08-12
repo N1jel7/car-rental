@@ -5,8 +5,8 @@ import com.innowise.carrental.exception.ServiceException;
 import com.innowise.carrental.exception.ValidationException;
 import com.innowise.carrental.filter.AuthFilter;
 import com.innowise.carrental.service.ReviewService;
+import com.innowise.carrental.util.ServletUtil;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -16,7 +16,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
-@WebServlet("/reviews/*")
 public class ReviewServlet extends HttpServlet {
 
     private static final Logger log = LoggerFactory.getLogger(ReviewServlet.class);
@@ -64,24 +63,16 @@ public class ReviewServlet extends HttpServlet {
 
         } catch (ValidationException e) {
             response.sendRedirect(request.getContextPath()
-                    + "/cars/" + carIdParam + "?error=" + encode(e.getMessage()));
+                    + "/cars/" + carIdParam + "?error=" + ServletUtil.encode(e.getMessage()));
 
         } catch (NumberFormatException e) {
             response.sendRedirect(request.getContextPath()
-                    + "/cars/" + carIdParam + "?error=invalid_input");
+                    + "/cars/" + carIdParam + "?error=" + ServletUtil.encode("Invalid review data"));
 
         } catch (ServiceException e) {
             log.error("Failed to create review userId={}", user.getId(), e);
             response.sendRedirect(request.getContextPath()
-                    + "/cars/" + carIdParam + "?error=review_failed");
-        }
-    }
-
-    private String encode(String value) {
-        try {
-            return java.net.URLEncoder.encode(value, "UTF-8");
-        } catch (Exception e) {
-            return "error";
+                    + "/cars/" + carIdParam + "?error=" + ServletUtil.encode("Failed to submit review. Please try again"));
         }
     }
 

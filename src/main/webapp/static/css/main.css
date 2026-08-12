@@ -71,6 +71,11 @@ body {
     transition: background var(--transition), color var(--transition);
 }
 
+img {
+    max-width: 100%;
+    display: block;
+}
+
 /* ============================================================
    CUSTOM SCROLLBAR
    ============================================================ */
@@ -255,6 +260,41 @@ a:hover { color: var(--accent-hover); }
 }
 
 /* ============================================================
+   AVATAR — default initial-circle, no per-user image
+   ============================================================ */
+.avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--accent);
+    color: var(--text-inverse);
+    font-family: var(--font-display);
+    font-weight: 700;
+    flex-shrink: 0;
+    line-height: 1;
+}
+
+.avatar--sm {
+    width: 28px;
+    height: 28px;
+    font-size: 0.8rem;
+}
+
+.avatar--lg {
+    width: 64px;
+    height: 64px;
+    font-size: 1.6rem;
+}
+
+.navbar__profile {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+}
+
+/* ============================================================
    LANGUAGE SWITCHER
    ============================================================ */
 .lang-switcher {
@@ -284,6 +324,41 @@ a:hover { color: var(--accent-hover); }
 }
 
 .lang-switcher a.active {
+    background: var(--accent);
+    color: #fff;
+}
+
+/* ============================================================
+   STATUS FILTER TABS (admin lists)
+   ============================================================ */
+.tabs {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-pill);
+    padding: 4px;
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+.tab {
+    padding: 8px 18px;
+    border-radius: var(--radius-pill);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    white-space: nowrap;
+    transition: background var(--transition), color var(--transition);
+}
+
+.tab:hover {
+    color: var(--text);
+    background: var(--bg-surface);
+}
+
+.tab.active {
     background: var(--accent);
     color: #fff;
 }
@@ -430,13 +505,158 @@ input[type="date"].form-control {
     cursor: pointer;
 }
 
+/* Number input — hide the native spinner, we render a themed one instead */
+.form-control[type="number"] {
+    -moz-appearance: textfield;
+    padding-right: 34px;
+}
+
+.form-control[type="number"]::-webkit-inner-spin-button,
+.form-control[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.number-input {
+    position: relative;
+}
+
+.number-input__controls {
+    position: absolute;
+    top: 1px;
+    right: 1px;
+    bottom: 1px;
+    width: 28px;
+    display: flex;
+    flex-direction: column;
+    border-left: 1px solid var(--border);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    overflow: hidden;
+}
+
+.number-input__btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: none;
+    background: var(--bg-elevated);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: background var(--transition), color var(--transition);
+}
+
+.number-input__btn:first-child {
+    border-bottom: 1px solid var(--border);
+}
+
+.number-input__btn:hover {
+    background: var(--accent-soft);
+    color: var(--accent);
+}
+
+.number-input__btn::before {
+    content: '';
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+}
+
+.number-input__btn--up::before {
+    border-bottom: 5px solid currentColor;
+}
+
+.number-input__btn--down::before {
+    border-top: 5px solid currentColor;
+}
+
 /* Custom checkbox & radio */
 input[type="checkbox"],
 input[type="radio"] {
     accent-color: var(--accent);
-    width: 16px;
-    height: 16px;
+    appearance: none;
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    min-width: 18px;
+    flex-shrink: 0;
+    margin: 0;
+    border: 1.5px solid var(--border);
+    background: var(--bg-surface);
     cursor: pointer;
+    position: relative;
+    transition: border-color var(--transition), background var(--transition), box-shadow var(--transition);
+}
+
+input[type="checkbox"] { border-radius: 5px; }
+input[type="radio"]    { border-radius: 50%; }
+
+input[type="checkbox"]:hover,
+input[type="radio"]:hover {
+    border-color: var(--accent);
+}
+
+input[type="checkbox"]:checked,
+input[type="radio"]:checked {
+    border-color: var(--accent);
+    background: var(--accent);
+}
+
+input[type="checkbox"]:checked::after {
+    content: '';
+    position: absolute;
+    left: 5px;
+    top: 1px;
+    width: 5px;
+    height: 9px;
+    border: solid var(--text-inverse);
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+input[type="radio"]:checked::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--text-inverse);
+    transform: translate(-50%, -50%);
+}
+
+input[type="checkbox"]:focus-visible,
+input[type="radio"]:focus-visible {
+    box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+/* File input — themed selector button */
+.form-control[type="file"] {
+    padding: 8px;
+    cursor: pointer;
+}
+
+.form-control[type="file"]::file-selector-button {
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text);
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 8px 14px;
+    margin-right: 12px;
+    cursor: pointer;
+    transition: background var(--transition), border-color var(--transition), color var(--transition);
+}
+
+.form-control[type="file"]::file-selector-button:hover {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    color: var(--accent);
 }
 
 .form-stack {
@@ -546,22 +766,58 @@ input[type="radio"] {
     margin-bottom: 4px;
 }
 
-.car-card__year {
-    font-family: var(--font-mono);
-    font-size: 0.8rem;
-    color: var(--text-muted);
+.car-card__meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
     margin-bottom: 12px;
 }
 
-.car-card__price {
+.car-card__year {
     font-family: var(--font-mono);
-    font-size: 1.15rem;
-    font-weight: 500;
+    font-size: 0.92rem;
+    color: var(--text-muted);
+}
+
+.car-card__rating {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #f59e0b;
+}
+
+.car-card__rating--empty {
+    color: var(--text-muted);
+    font-family: var(--font-body);
+    font-weight: 400;
+    font-size: 0.8rem;
+}
+
+.car-card__price {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    padding-top: 12px;
+    margin-top: 2px;
+    border-top: 1px solid var(--border);
+}
+
+.car-card__price-value {
+    font-family: var(--font-mono);
+    font-size: 1.6rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    font-variant-numeric: tabular-nums;
     color: var(--accent);
 }
 
-.car-card__price span {
-    font-size: 0.78rem;
+.car-card__price-unit {
+    font-size: 0.8rem;
+    font-weight: 500;
     color: var(--text-muted);
     font-family: var(--font-body);
 }
@@ -731,6 +987,22 @@ tbody tr:hover {
 
 .stars .empty { color: var(--border); }
 
+/* Interactive star picker (review form) */
+.star-input__star {
+    color: var(--border);
+    transition: color 0.12s ease, transform 0.12s ease;
+    user-select: none;
+}
+
+.star-input__star.active,
+.star-input__star.hover {
+    color: #f59e0b;
+}
+
+.star-input__star.hover {
+    transform: scale(1.12);
+}
+
 /* ============================================================
    PRICE TAG
    ============================================================ */
@@ -771,6 +1043,45 @@ tbody tr:hover {
 
 @media (max-width: 700px) {
     .cars-grid { grid-template-columns: 1fr; }
+}
+
+/* ============================================================
+   CATALOG FILTERS
+   ============================================================ */
+.cars-filter {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 16px;
+}
+
+.cars-filter__field {
+    flex: 1 1 180px;
+    min-width: 140px;
+}
+
+.cars-filter__field--narrow {
+    flex: 0 1 150px;
+}
+
+.cars-filter__actions {
+    display: flex;
+    gap: 8px;
+    margin-left: auto;
+}
+
+@media (max-width: 700px) {
+    .cars-filter__field,
+    .cars-filter__field--narrow {
+        flex: 1 1 100%;
+    }
+    .cars-filter__actions {
+        margin-left: 0;
+        width: 100%;
+    }
+    .cars-filter__actions .btn {
+        flex: 1;
+    }
 }
 
 /* ============================================================
@@ -921,4 +1232,202 @@ tbody tr:hover {
         animation-duration: 0.01ms !important;
         transition-duration: 0.01ms !important;
     }
+}
+
+/* ============================================================
+   ADMIN — CAR PHOTO MANAGER
+   ============================================================ */
+.image-manager-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.image-manager-item {
+    position: relative;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    background: var(--bg-elevated);
+    transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.image-manager-item--primary {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent);
+}
+
+.image-manager-item--primary::before {
+    content: '★ Обложка';
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    padding: 2px 8px;
+    border-radius: var(--radius-pill);
+    background: var(--accent);
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    z-index: 1;
+}
+
+.image-manager-item img {
+    width: 100%;
+    height: 90px;
+    object-fit: cover;
+    display: block;
+}
+
+.image-manager-item__primary,
+.image-manager-item__delete {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 8px;
+    font-size: 0.78rem;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: color var(--transition);
+}
+
+.image-manager-item__primary {
+    border-top: 1px solid var(--border);
+}
+
+.image-manager-item__primary:has(input:checked) {
+    color: var(--accent);
+    font-weight: 600;
+}
+
+.image-manager-item__delete {
+    border-top: 1px solid var(--border);
+    color: var(--accent);
+}
+
+.image-manager-item__primary input,
+.image-manager-item__delete input {
+    margin: 0;
+}
+
+.image-manager-item__remove {
+    display: block;
+    width: 100%;
+    padding: 6px 8px;
+    font-family: var(--font-body);
+    font-size: 0.78rem;
+    font-weight: 500;
+    border: none;
+    border-top: 1px solid var(--border);
+    background: var(--bg-surface);
+    color: var(--accent);
+    cursor: pointer;
+    transition: background var(--transition);
+}
+
+.image-manager-item__remove:hover {
+    background: var(--accent-soft);
+}
+
+/* ============================================================
+   CAR DETAIL — PHOTO CAROUSEL
+   ============================================================ */
+.car-gallery {
+    position: relative;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background: var(--bg-elevated);
+    margin-bottom: 16px;
+    aspect-ratio: 16/9;
+}
+
+.car-gallery__track {
+    display: flex;
+    height: 100%;
+    transition: transform 0.35s ease;
+}
+
+.car-gallery__slide {
+    flex: 0 0 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.car-gallery__slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.car-gallery__placeholder {
+    font-size: 4rem;
+}
+
+.car-gallery__nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(0, 0, 0, 0.5);
+    color: #fff;
+    font-size: 1.1rem;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 2;
+}
+
+.car-gallery__nav:hover {
+    background: rgba(0, 0, 0, 0.7);
+}
+
+.car-gallery__nav--prev { left: 12px; }
+.car-gallery__nav--next { right: 12px; }
+
+.car-gallery__counter {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.55);
+    color: #fff;
+    font-size: 0.78rem;
+    z-index: 2;
+}
+
+.car-gallery__thumbs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+}
+
+.car-gallery__thumb {
+    width: 80px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+    border: 2px solid var(--border);
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.15s ease, border-color 0.15s ease;
+}
+
+.car-gallery__thumb:hover {
+    opacity: 1;
+}
+
+.car-gallery__thumb.active {
+    opacity: 1;
+    border-color: var(--accent);
 }

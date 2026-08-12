@@ -52,6 +52,30 @@ public class CarService {
         }
     }
 
+    // Public catalog search — shows cars of any status; availableOnly narrows to free/occupied.
+    public List<Car> search(String make, BigDecimal minPrice, BigDecimal maxPrice,
+                             Boolean availableOnly, int page, int pageSize) throws ServiceException {
+        try {
+            int offset = (page - 1) * pageSize;
+            return carDao.search(make, minPrice, maxPrice, availableOnly, offset, pageSize);
+        } catch (DaoException e) {
+            log.error("Failed to search cars make={} minPrice={} maxPrice={} availableOnly={}",
+                    make, minPrice, maxPrice, availableOnly, e);
+            throw new ServiceException("Failed to search cars", e);
+        }
+    }
+
+    public int countSearch(String make, BigDecimal minPrice, BigDecimal maxPrice,
+                            Boolean availableOnly) throws ServiceException {
+        try {
+            return carDao.countSearch(make, minPrice, maxPrice, availableOnly);
+        } catch (DaoException e) {
+            log.error("Failed to count car search make={} minPrice={} maxPrice={} availableOnly={}",
+                    make, minPrice, maxPrice, availableOnly, e);
+            throw new ServiceException("Failed to count car search", e);
+        }
+    }
+
     public Car findById(long id) throws ServiceException {
         try {
             return carDao.findById(id)
@@ -165,11 +189,25 @@ public class CarService {
 
     public void deleteImage(long imageId) throws ServiceException {
         try {
+            carImageDao.findById(imageId).ifPresent(image ->
+                    com.innowise.carrental.util.FileUploadUtil.delete(
+                            image.getFilePath(), com.innowise.carrental.util.FileUploadUtil.getUploadsRoot()));
+
             carImageDao.delete(imageId);
             log.info("Deleted image id={}", imageId);
         } catch (DaoException e) {
             log.error("Failed to delete image id={}", imageId, e);
             throw new ServiceException("Failed to delete car image", e);
+        }
+    }
+
+    public void setPrimaryImage(long carId, long imageId) throws ServiceException {
+        try {
+            carImageDao.setPrimary(imageId, carId);
+            log.info("Set primary image id={} for carId={}", imageId, carId);
+        } catch (DaoException e) {
+            log.error("Failed to set primary image id={} for carId={}", imageId, carId, e);
+            throw new ServiceException("Failed to set primary image", e);
         }
     }
 

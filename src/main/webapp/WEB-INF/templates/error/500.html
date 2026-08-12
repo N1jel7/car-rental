@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/base :: head('500 — Ошибка сервера')}"></head>
+<body>
+<nav th:replace="~{fragments/base :: navbar}"></nav>
+<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px">
+    <div style="text-align:center;max-width:400px">
+        <div style="font-family:var(--font-mono);font-size:5rem;font-weight:700;color:var(--accent);line-height:1;margin-bottom:16px">500</div>
+        <h1 style="font-family:var(--font-display);margin-bottom:8px">Ошибка сервера</h1>
+        <p class="text-muted" style="margin-bottom:32px">Что-то пошло не так. Мы уже знаем об этой проблеме.</p>
+        <a th:href="@{/cars}" class="btn btn-primary">На главную</a>
+    </div>
+</div>
+<footer th:replace="~{fragments/base :: footer}"></footer>
+<script th:src="@{/static/js/main.js(v=11)}"></script>
+</body>
+</html>

@@ -25,21 +25,21 @@ public class UserDaoImpl implements UserDao {
 
     private static final String FIND_BY_ID = """
             SELECT id, email, password_hash, full_name, phone,
-                   avatar_path, role, locale, created_at
+                   role, locale, created_at
             FROM users
             WHERE id = ?
             """;
 
     private static final String FIND_BY_EMAIL = """
             SELECT id, email, password_hash, full_name, phone,
-                   avatar_path, role, locale, created_at
+                   role, locale, created_at
             FROM users
             WHERE email = ?
             """;
 
     private static final String FIND_ALL_PAGED = """
             SELECT id, email, password_hash, full_name, phone,
-                   avatar_path, role, locale, created_at
+                   role, locale, created_at
             FROM users
             ORDER BY created_at DESC
             LIMIT ? OFFSET ?
@@ -48,14 +48,13 @@ public class UserDaoImpl implements UserDao {
     private static final String COUNT_ALL = "SELECT COUNT(*) FROM users";
 
     private static final String SAVE = """
-            INSERT INTO users (email, password_hash, full_name, phone,
-                               avatar_path, role, locale)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO users (email, password_hash, full_name, phone, role, locale)
+            VALUES (?, ?, ?, ?, ?, ?)
             """;
 
     private static final String UPDATE = """
             UPDATE users
-            SET email = ?, full_name = ?, phone = ?, avatar_path = ?, locale = ?
+            SET email = ?, full_name = ?, phone = ?, locale = ?
             WHERE id = ?
             """;
 
@@ -158,9 +157,8 @@ public class UserDaoImpl implements UserDao {
             statement.setString(2, user.getPasswordHash());
             statement.setString(3, user.getFullName());
             statement.setString(4, user.getPhone());
-            statement.setString(5, user.getAvatarPath());
-            statement.setString(6, user.getRole().name());
-            statement.setString(7, user.getLocale());
+            statement.setString(5, user.getRole().name());
+            statement.setString(6, user.getLocale());
 
             statement.executeUpdate();
 
@@ -185,9 +183,8 @@ public class UserDaoImpl implements UserDao {
             statement.setString(1, user.getEmail());
             statement.setString(2, user.getFullName());
             statement.setString(3, user.getPhone());
-            statement.setString(4, user.getAvatarPath());
-            statement.setString(5, user.getLocale());
-            statement.setLong(6, user.getId());
+            statement.setString(4, user.getLocale());
+            statement.setLong(5, user.getId());
 
             statement.executeUpdate();
 
@@ -220,7 +217,6 @@ public class UserDaoImpl implements UserDao {
         user.setPasswordHash(rs.getString("password_hash"));
         user.setFullName(rs.getString("full_name"));
         user.setPhone(rs.getString("phone"));
-        user.setAvatarPath(rs.getString("avatar_path"));
         user.setRole(Role.valueOf(rs.getString("role")));
         user.setLocale(rs.getString("locale"));
         user.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
