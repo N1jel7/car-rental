@@ -84,6 +84,43 @@ public class Review {
         this.createdAt = createdAt;
     }
 
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static class Builder {
+        private final Review review = new Review();
+
+        public Builder userId(Long userId) {
+            review.userId = userId;
+            return this;
+        }
+
+        public Builder carId(Long carId) {
+            review.carId = carId;
+            return this;
+        }
+
+        public Builder bookingId(Long bookingId) {
+            review.bookingId = bookingId;
+            return this;
+        }
+
+        public Builder rating(int rating) {
+            review.rating = rating;
+            return this;
+        }
+
+        public Builder comment(String comment) {
+            review.comment = comment;
+            return this;
+        }
+
+        public Review build() {
+            return review;
+        }
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

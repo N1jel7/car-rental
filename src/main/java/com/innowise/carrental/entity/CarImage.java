@@ -62,6 +62,33 @@ public class CarImage {
         this.uploadedAt = uploadedAt;
     }
 
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static class Builder {
+        private final CarImage image = new CarImage();
+
+        public Builder carId(Long carId) {
+            image.carId = carId;
+            return this;
+        }
+
+        public Builder filePath(String filePath) {
+            image.filePath = filePath;
+            return this;
+        }
+
+        public Builder primary(boolean primary) {
+            image.primary = primary;
+            return this;
+        }
+
+        public CarImage build() {
+            return image;
+        }
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

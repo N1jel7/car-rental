@@ -10,6 +10,7 @@ import com.innowise.carrental.entity.CarStatus;
 import com.innowise.carrental.exception.DaoException;
 import com.innowise.carrental.exception.ServiceException;
 import com.innowise.carrental.exception.ValidationException;
+import com.innowise.carrental.util.FileUploadUtil;
 import com.innowise.carrental.util.ValidatorUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,7 +56,7 @@ public class CarService {
 
     // Public catalog search — shows cars of any status; availableOnly narrows to free/occupied.
     public List<Car> search(String make, BigDecimal minPrice, BigDecimal maxPrice,
-                             Boolean availableOnly, int page, int pageSize) throws ServiceException {
+                            Boolean availableOnly, int page, int pageSize) throws ServiceException {
         try {
             int offset = (page - 1) * pageSize;
             return carDao.search(make, minPrice, maxPrice, availableOnly, offset, pageSize);
@@ -67,7 +68,7 @@ public class CarService {
     }
 
     public int countSearch(String make, BigDecimal minPrice, BigDecimal maxPrice,
-                            Boolean availableOnly) throws ServiceException {
+                           Boolean availableOnly) throws ServiceException {
         try {
             return carDao.countSearch(make, minPrice, maxPrice, availableOnly);
         } catch (DaoException e) {
@@ -98,19 +99,18 @@ public class CarService {
 
     public Car add(String make, String model, int year, BigDecimal pricePerDay, String description)
             throws ServiceException, ValidationException {
-        validateMake(make);
-        validateModel(model);
-        validateYear(year);
-        validatePrice(pricePerDay);
+
+        ValidatorUtil.validateCarUpdate(make, model, year, pricePerDay);
 
         try {
-            Car car = new Car();
-            car.setMake(make.strip());
-            car.setModel(model.strip());
-            car.setYear(year);
-            car.setPricePerDay(pricePerDay);
-            car.setStatus(CarStatus.AVAILABLE);
-            car.setDescription(description != null ? description.strip() : null);
+            Car car = Car.builder()
+                    .make(make.strip())
+                    .model(model.strip())
+                    .year(year)
+                    .pricePerDay(pricePerDay)
+                    .status(CarStatus.AVAILABLE)
+                    .description(description != null ? description.strip() : null)
+                    .build();
 
             carDao.save(car);
             log.info("Added new car make={} model={}", make, model);
@@ -124,10 +124,8 @@ public class CarService {
 
     public void update(long carId, String make, String model, int year, BigDecimal pricePerDay, String description)
             throws ServiceException, ValidationException {
-        validateMake(make);
-        validateModel(model);
-        validateYear(year);
-        validatePrice(pricePerDay);
+
+        ValidatorUtil.validateCarUpdate(make, model, year, pricePerDay);
 
         try {
             Car car = carDao.findById(carId)
@@ -174,10 +172,11 @@ public class CarService {
     public void addImage(long carId, String filePath, boolean isPrimary)
             throws ServiceException {
         try {
-            CarImage image = new CarImage();
-            image.setCarId(carId);
-            image.setFilePath(filePath);
-            image.setPrimary(isPrimary);
+            CarImage image = CarImage.builder()
+                    .carId(carId)
+                    .filePath(filePath)
+                    .primary(isPrimary)
+                    .build();
 
             carImageDao.save(image);
             log.info("Added image for carId={} primary={}", carId, isPrimary);
@@ -191,8 +190,8 @@ public class CarService {
     public void deleteImage(long imageId) throws ServiceException {
         try {
             carImageDao.findById(imageId).ifPresent(image ->
-                    com.innowise.carrental.util.FileUploadUtil.delete(
-                            image.getFilePath(), com.innowise.carrental.util.FileUploadUtil.getUploadsRoot()));
+                    FileUploadUtil.delete(
+                            image.getFilePath(), FileUploadUtil.getUploadsRoot()));
 
             carImageDao.delete(imageId);
             log.info("Deleted image id={}", imageId);
@@ -228,24 +227,6 @@ public class CarService {
             log.error("Failed to find primary image for carId={}", carId, e);
             throw new ServiceException("Failed to load primary image", e);
         }
-    }
-
-    private void validateMake(String make) throws ValidationException {
-        ValidatorUtil.notBlank(make, "Car make must not be empty");
-    }
-
-    private void validateModel(String model) throws ValidationException {
-        ValidatorUtil.notBlank(model, "Car model must not be empty");
-    }
-
-    private void validateYear(int year) throws ValidationException {
-        int currentYear = java.time.Year.now().getValue();
-        ValidatorUtil.inRange(year, 1900, currentYear + 1,
-                "Car year must be between 1900 and " + (currentYear + 1));
-    }
-
-    private void validatePrice(BigDecimal price) throws ValidationException {
-        ValidatorUtil.positive(price, "Price per day must be greater than 0");
     }
 
 }

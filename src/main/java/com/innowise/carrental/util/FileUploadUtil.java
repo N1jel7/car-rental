@@ -18,9 +18,14 @@ public class FileUploadUtil {
     private static final Logger log = LoggerFactory.getLogger(FileUploadUtil.class);
 
     private static final Set<String> ALLOWED_EXTENSIONS = Set.of("jpg", "jpeg", "png", "webp");
-    private static final long MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+
     private static final String APP_PROPERTIES = "app.properties";
     private static final String UPLOADS_PATH = "uploads.path";
+    private static final String MAX_FILE_SIZE_MB_PROPERTY = "uploads.max-file-size-mb";
+
+    // Loaded once — the single source of truth for the upload size limit,
+    // instead of separate hardcoded constants scattered across classes.
+    private static final Properties PROPERTIES = PropertiesLoader.load(APP_PROPERTIES);
 
     private FileUploadUtil() {
 
@@ -32,7 +37,6 @@ public class FileUploadUtil {
         String extension = getExtension(originalFilename);
         validateExtension(extension);
 
-        // Generate a safe unique filename
         String filename = UUID.randomUUID() + "." + extension;
         String relativePath = subfolder + "/" + filename;
 
@@ -42,9 +46,10 @@ public class FileUploadUtil {
         Path targetFile = targetDir.resolve(filename);
         long copied = Files.copy(inputStream, targetFile, StandardCopyOption.REPLACE_EXISTING);
 
-        if (copied > MAX_FILE_SIZE) {
+        long maxFileSizeBytes = getMaxFileSizeBytes();
+        if (copied > maxFileSizeBytes) {
             Files.deleteIfExists(targetFile);
-            throw new IOException("File too large: max size is 10 MB");
+            throw new IOException("File too large: max size is %d MB".formatted(maxFileSizeBytes / (1024 * 1024)));
         }
 
         log.info("Saved upload: {}", relativePath);
@@ -75,17 +80,11 @@ public class FileUploadUtil {
 
 
     public static String getUploadsRoot() {
-        try (InputStream in = FileUploadUtil.class.getClassLoader()
-                .getResourceAsStream(APP_PROPERTIES)) {
-            if (in == null) {
-                throw new IllegalStateException("app.properties not found");
-            }
-            Properties properties = new Properties();
-            properties.load(in);
-            return properties.getProperty(UPLOADS_PATH);
-        } catch (IOException e) {
-            throw new IllegalStateException("Failed to read uploads.path", e);
-        }
+        return PROPERTIES.getProperty(UPLOADS_PATH);
+    }
+
+    public static long getMaxFileSizeBytes() {
+        return Long.parseLong(PROPERTIES.getProperty(MAX_FILE_SIZE_MB_PROPERTY)) * 1024 * 1024;
     }
 
     private static String getExtension(String filename) throws IOException {

@@ -1,14 +1,11 @@
 package com.innowise.carrental.config;
 
+import com.innowise.carrental.util.PropertiesLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.thymeleaf.context.ITemplateContext;
 import org.thymeleaf.messageresolver.IMessageResolver;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
@@ -17,7 +14,10 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ClassLoaderMessageResolver implements IMessageResolver {
 
     private static final Logger log = LoggerFactory.getLogger(ClassLoaderMessageResolver.class);
+
     private static final String BASE_NAME = "messages";
+    private static final String UNDERSCORE = "_";
+    private static final String DOT_PROPERTIES = ".properties";
     private static final String DEFAULT_LOCALE = "ru";
 
     private final Map<String, Properties> cache = new ConcurrentHashMap<>();
@@ -64,14 +64,11 @@ public class ClassLoaderMessageResolver implements IMessageResolver {
         return "[" + key + "]";
     }
 
-    private Properties loadProperties(String lang) {
-        return cache.computeIfAbsent(lang, l -> {
-            Properties props = new Properties();
-            String filename = BASE_NAME + "_" + l + ".properties";
-            try (InputStream in = getClass().getClassLoader().getResourceAsStream(filename);
-                 InputStreamReader reader = new InputStreamReader(in, StandardCharsets.UTF_8)) {
-                props.load(reader);
-            } catch (IOException | NullPointerException e) {
+    private Properties loadProperties(String language) {
+        return cache.computeIfAbsent(language, l -> {
+            String filename = BASE_NAME + UNDERSCORE + l + DOT_PROPERTIES;
+            Properties props = PropertiesLoader.loadOrEmpty(filename);
+            if (props.isEmpty()) {
                 log.warn("Could not load {}", filename);
             }
             return props;

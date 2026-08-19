@@ -44,7 +44,8 @@ public class BookingService {
     // 4. No overlapping active bookings for this car on these dates
     public Booking create(long userId, long carId, LocalDate dateFrom, LocalDate dateTo)
             throws ServiceException, ValidationException {
-        validateDates(dateFrom, dateTo);
+
+        ValidatorUtil.validateDates(dateFrom, dateTo);
 
         try {
             Car car = carDao.findById(carId)
@@ -55,22 +56,20 @@ public class BookingService {
             }
 
             if (bookingDao.existsOverlapping(carId, dateFrom, dateTo)) {
-                throw new ValidationException(
-                        "Car is already booked for the selected dates");
+                throw new ValidationException("Car is already booked for the selected dates");
             }
 
-
             long days = ChronoUnit.DAYS.between(dateFrom, dateTo);
-            BigDecimal totalPrice = car.getPricePerDay()
-                    .multiply(BigDecimal.valueOf(days));
+            BigDecimal totalPrice = car.getPricePerDay().multiply(BigDecimal.valueOf(days));
 
-            Booking booking = new Booking();
-            booking.setUserId(userId);
-            booking.setCarId(carId);
-            booking.setDateFrom(dateFrom);
-            booking.setDateTo(dateTo);
-            booking.setTotalPrice(totalPrice);
-            booking.setStatus(BookingStatus.PENDING);
+            Booking booking = Booking.builder()
+                    .userId(userId)
+                    .carId(carId)
+                    .dateFrom(dateFrom)
+                    .dateTo(dateTo)
+                    .totalPrice(totalPrice)
+                    .status(BookingStatus.PENDING)
+                    .build();
 
             bookingDao.save(booking);
             log.info("Created booking id={} userId={} carId={}", booking.getId(), userId, carId);
@@ -89,8 +88,7 @@ public class BookingService {
                     .orElseThrow(() -> new ServiceException("Booking not found: " + bookingId));
 
             if (booking.getStatus() != BookingStatus.PENDING) {
-                throw new ServiceException(
-                        "Only PENDING bookings can be confirmed");
+                throw new ServiceException("Only PENDING bookings can be confirmed");
             }
 
             bookingDao.updateStatus(bookingId, BookingStatus.CONFIRMED);
@@ -208,14 +206,6 @@ public class BookingService {
             log.error("Failed to count bookings by status={}", status, e);
             throw new ServiceException("Failed to count bookings", e);
         }
-    }
-
-
-    private void validateDates(LocalDate dateFrom, LocalDate dateTo)
-            throws ValidationException {
-        ValidatorUtil.isTrue(dateFrom != null && dateTo != null, "Dates must not be empty");
-        ValidatorUtil.isTrue(dateFrom.isBefore(dateTo), "Return date must be after pickup date");
-        ValidatorUtil.isTrue(!dateFrom.isBefore(LocalDate.now()), "Pickup date cannot be in the past");
     }
 
 }

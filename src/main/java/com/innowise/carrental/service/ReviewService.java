@@ -42,8 +42,7 @@ public class ReviewService {
     public Review create(long userId, long bookingId, int rating, String comment)
             throws ServiceException, ValidationException {
 
-        validateRating(rating);
-        validateComment(comment);
+        ValidatorUtil.validateReview(rating, comment);
 
         try {
             Booking booking = bookingDao.findById(bookingId)
@@ -65,12 +64,13 @@ public class ReviewService {
                         "You have already left a review for this booking");
             }
 
-            Review review = new Review();
-            review.setUserId(userId);
-            review.setCarId(booking.getCarId());
-            review.setBookingId(bookingId);
-            review.setRating(rating);
-            review.setComment(comment.strip());
+            Review review = Review.builder()
+                    .userId(userId)
+                    .carId(booking.getCarId())
+                    .bookingId(bookingId)
+                    .rating(rating)
+                    .comment(comment.strip())
+                    .build();
 
             reviewDao.save(review);
             log.info("Created review id={} userId={} bookingId={}",
@@ -141,15 +141,6 @@ public class ReviewService {
             log.error("Failed to delete review id={}", reviewId, e);
             throw new ServiceException("Failed to delete review", e);
         }
-    }
-
-    private void validateRating(int rating) throws ValidationException {
-        ValidatorUtil.inRange(rating, 1, 5, "Rating must be between 1 and 5");
-    }
-
-    private void validateComment(String comment) throws ValidationException {
-        ValidatorUtil.notBlank(comment, "Comment must not be empty");
-        ValidatorUtil.maxLength(comment, 1000, "Comment must not exceed 1000 characters");
     }
 
 }

@@ -36,7 +36,6 @@ public class AdminServlet extends HttpServlet {
     private static final String SUBFOLDER = "cars";
     private static final int PAGE_SIZE = 10;
     private static final int MAX_IMAGES = 10;
-    private static final long MAX_IMAGE_SIZE = 10 * 1024 * 1024;
     private static final Set<String> ALLOWED_IMAGE_EXTENSIONS = Set.of("jpg", "jpeg", "png", "webp");
 
     private CarService carService;
@@ -203,7 +202,8 @@ public class AdminServlet extends HttpServlet {
                 redirect(request, response, "/admin/cars/new", "error", "Too many photos: max " + MAX_IMAGES);
                 return;
             }
-            String imageError = ValidatorUtil.validateImageParts(imageParts, ALLOWED_IMAGE_EXTENSIONS, MAX_IMAGE_SIZE);
+            String imageError = ValidatorUtil.validateImageParts(
+                    imageParts, ALLOWED_IMAGE_EXTENSIONS, FileUploadUtil.getMaxFileSizeBytes());
             if (imageError != null) {
                 redirect(request, response, "/admin/cars/new", "error", imageError);
                 return;
@@ -267,7 +267,8 @@ public class AdminServlet extends HttpServlet {
                 redirect(request, response, editPath, "error", "Too many photos: max " + MAX_IMAGES);
                 return;
             }
-            String imageError = ValidatorUtil.validateImageParts(imageParts, ALLOWED_IMAGE_EXTENSIONS, MAX_IMAGE_SIZE);
+            String imageError = ValidatorUtil.validateImageParts(
+                    imageParts, ALLOWED_IMAGE_EXTENSIONS, FileUploadUtil.getMaxFileSizeBytes());
             if (imageError != null) {
                 redirect(request, response, editPath, "error", imageError);
                 return;

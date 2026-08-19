@@ -94,6 +94,48 @@ public class Car {
         this.createdAt = createdAt;
     }
 
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static class Builder {
+        private final Car car = new Car();
+
+        public Builder make(String make) {
+            car.make = make;
+            return this;
+        }
+
+        public Builder model(String model) {
+            car.model = model;
+            return this;
+        }
+
+        public Builder year(int year) {
+            car.year = year;
+            return this;
+        }
+
+        public Builder pricePerDay(BigDecimal pricePerDay) {
+            car.pricePerDay = pricePerDay;
+            return this;
+        }
+
+        public Builder status(CarStatus status) {
+            car.status = status;
+            return this;
+        }
+
+        public Builder description(String description) {
+            car.description = description;
+            return this;
+        }
+
+        public Car build() {
+            return car;
+        }
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

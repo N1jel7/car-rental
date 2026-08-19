@@ -21,36 +21,32 @@ public class UserService {
 
     private final UserDao userDao;
 
-    // We accept UserDao as a constructor parameter (dependency injection by hand,
-    // without any framework). This makes it easy to substitute a mock in tests:
-    // new UserService(mockUserDao) — no real DB needed in unit tests.
     public UserService(UserDao userDao) {
         this.userDao = userDao;
     }
 
-    // Default constructor for production use — wires the real implementation.
     public UserService() {
         this(new UserDaoImpl());
     }
 
     public User register(String email, String password, String fullName, String phone)
             throws ServiceException, ValidationException {
-        validateEmail(email);
-        validatePassword(password);
-        validateFullName(fullName);
+
+        ValidatorUtil.validateRegistration(email, password, fullName);
 
         try {
             if (userDao.findByEmail(email).isPresent()) {
                 throw new ValidationException("Email already registered: " + email);
             }
 
-            User user = new User();
-            user.setEmail(email.toLowerCase().strip());
-            user.setPasswordHash(PasswordUtil.hash(password));
-            user.setFullName(fullName.strip());
-            user.setPhone(phone != null ? phone.strip() : null);
-            user.setRole(Role.USER);
-            user.setLocale("ru");
+            User user = User.builder()
+                    .email(email.toLowerCase().strip())
+                    .passwordHash(PasswordUtil.hash(password))
+                    .fullName(fullName.strip())
+                    .phone(phone != null ? phone.strip() : null)
+                    .role(Role.USER)
+                    .locale("ru")
+                    .build();
 
             userDao.save(user);
             log.info("Registered new user email={}", email);
@@ -64,8 +60,7 @@ public class UserService {
 
     public User login(String email, String password)
             throws ServiceException, ValidationException {
-        validateEmail(email);
-        ValidatorUtil.notBlank(password, "Password must not be empty");
+        ValidatorUtil.validateLogin(email, password);
 
         try {
             Optional<User> found = userDao.findByEmail(email.toLowerCase().strip());
@@ -95,7 +90,7 @@ public class UserService {
 
     public void updateProfile(long userId, String fullName, String phone, String locale)
             throws ServiceException, ValidationException {
-        validateFullName(fullName);
+        ValidatorUtil.notBlank(fullName, "Full name must not be empty");
 
         try {
             User user = userDao.findById(userId)
@@ -116,7 +111,7 @@ public class UserService {
 
     public void changePassword(long userId, String oldPassword, String newPassword)
             throws ServiceException, ValidationException {
-        validatePassword(newPassword);
+        ValidatorUtil.minLength(newPassword, 8, "Password must be at least 8 characters");
 
         try {
             User user = userDao.findById(userId)
@@ -153,19 +148,6 @@ public class UserService {
             log.error("Failed to count users", e);
             throw new ServiceException("Failed to count users", e);
         }
-    }
-
-    private void validateEmail(String email) throws ValidationException {
-        ValidatorUtil.notBlank(email, "Email must not be empty");
-        ValidatorUtil.matchesEmail(email, "Invalid email format");
-    }
-
-    private void validatePassword(String password) throws ValidationException {
-        ValidatorUtil.minLength(password, 8, "Password must be at least 8 characters");
-    }
-
-    private void validateFullName(String fullName) throws ValidationException {
-        ValidatorUtil.notBlank(fullName, "Full name must not be empty");
     }
 
 }

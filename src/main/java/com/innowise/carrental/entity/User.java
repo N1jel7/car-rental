@@ -94,6 +94,48 @@ public class User {
         this.createdAt = createdAt;
     }
 
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static class Builder {
+        private final User user = new User();
+
+        public Builder email(String email) {
+            user.email = email;
+            return this;
+        }
+
+        public Builder passwordHash(String passwordHash) {
+            user.passwordHash = passwordHash;
+            return this;
+        }
+
+        public Builder fullName(String fullName) {
+            user.fullName = fullName;
+            return this;
+        }
+
+        public Builder phone(String phone) {
+            user.phone = phone;
+            return this;
+        }
+
+        public Builder role(Role role) {
+            user.role = role;
+            return this;
+        }
+
+        public Builder locale(String locale) {
+            user.locale = locale;
+            return this;
+        }
+
+        public User build() {
+            return user;
+        }
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

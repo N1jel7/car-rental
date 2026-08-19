@@ -96,6 +96,48 @@ public class Booking {
         this.createdAt = createdAt;
     }
 
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static class Builder {
+        private final Booking booking = new Booking();
+
+        public Builder userId(Long userId) {
+            booking.userId = userId;
+            return this;
+        }
+
+        public Builder carId(Long carId) {
+            booking.carId = carId;
+            return this;
+        }
+
+        public Builder dateFrom(LocalDate dateFrom) {
+            booking.dateFrom = dateFrom;
+            return this;
+        }
+
+        public Builder dateTo(LocalDate dateTo) {
+            booking.dateTo = dateTo;
+            return this;
+        }
+
+        public Builder totalPrice(BigDecimal totalPrice) {
+            booking.totalPrice = totalPrice;
+            return this;
+        }
+
+        public Builder status(BookingStatus status) {
+            booking.status = status;
+            return this;
+        }
+
+        public Booking build() {
+            return booking;
+        }
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

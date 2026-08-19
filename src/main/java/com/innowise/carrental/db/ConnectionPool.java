@@ -1,10 +1,9 @@
 package com.innowise.carrental.db;
 
 import com.innowise.carrental.exception.DaoException;
+import com.innowise.carrental.util.PropertiesLoader;
 import org.postgresql.Driver;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Proxy;
 import java.sql.Connection;
@@ -25,7 +24,7 @@ public final class ConnectionPool {
     private final List<Connection> allConnections;
 
     private ConnectionPool() {
-        Properties props = loadProperties();
+        Properties props = PropertiesLoader.load(CONFIG_FILE);
 
         String url = props.getProperty("db.url");
         String user = props.getProperty("db.username");
@@ -50,19 +49,6 @@ public final class ConnectionPool {
         } catch (SQLException e) {
             throw new IllegalStateException("Failed to initialize connection pool", e);
         }
-    }
-
-    private Properties loadProperties() {
-        Properties props = new Properties();
-        try (InputStream in = ConnectionPool.class.getClassLoader().getResourceAsStream(CONFIG_FILE)) {
-            if (in == null) {
-                throw new IllegalStateException(CONFIG_FILE + " not found on classpath");
-            }
-            props.load(in);
-        } catch (IOException e) {
-            throw new IllegalStateException("Failed to read " + CONFIG_FILE, e);
-        }
-        return props;
     }
 
     public static ConnectionPool getInstance() {
