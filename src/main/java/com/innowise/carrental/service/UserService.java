@@ -8,6 +8,7 @@ import com.innowise.carrental.exception.DaoException;
 import com.innowise.carrental.exception.ServiceException;
 import com.innowise.carrental.exception.ValidationException;
 import com.innowise.carrental.util.PasswordUtil;
+import com.innowise.carrental.util.ValidatorUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,10 +65,7 @@ public class UserService {
     public User login(String email, String password)
             throws ServiceException, ValidationException {
         validateEmail(email);
-
-        if (password == null || password.isBlank()) {
-            throw new ValidationException("Password must not be empty");
-        }
+        ValidatorUtil.notBlank(password, "Password must not be empty");
 
         try {
             Optional<User> found = userDao.findByEmail(email.toLowerCase().strip());
@@ -157,27 +155,17 @@ public class UserService {
         }
     }
 
-
     private void validateEmail(String email) throws ValidationException {
-        if (email == null || email.isBlank()) {
-            throw new ValidationException("Email must not be empty");
-        }
-
-        if (!email.contains("@") || !email.contains(".")) {
-            throw new ValidationException("Invalid email format");
-        }
+        ValidatorUtil.notBlank(email, "Email must not be empty");
+        ValidatorUtil.matchesEmail(email, "Invalid email format");
     }
 
     private void validatePassword(String password) throws ValidationException {
-        if (password == null || password.length() < 8) {
-            throw new ValidationException("Password must be at least 8 characters");
-        }
+        ValidatorUtil.minLength(password, 8, "Password must be at least 8 characters");
     }
 
     private void validateFullName(String fullName) throws ValidationException {
-        if (fullName == null || fullName.isBlank()) {
-            throw new ValidationException("Full name must not be empty");
-        }
+        ValidatorUtil.notBlank(fullName, "Full name must not be empty");
     }
 
 }

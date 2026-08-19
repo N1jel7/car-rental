@@ -10,6 +10,7 @@ import com.innowise.carrental.entity.Review;
 import com.innowise.carrental.exception.DaoException;
 import com.innowise.carrental.exception.ServiceException;
 import com.innowise.carrental.exception.ValidationException;
+import com.innowise.carrental.util.ValidatorUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -143,18 +144,12 @@ public class ReviewService {
     }
 
     private void validateRating(int rating) throws ValidationException {
-        if (rating < 1 || rating > 5) {
-            throw new ValidationException("Rating must be between 1 and 5");
-        }
+        ValidatorUtil.inRange(rating, 1, 5, "Rating must be between 1 and 5");
     }
 
     private void validateComment(String comment) throws ValidationException {
-        if (comment == null || comment.isBlank()) {
-            throw new ValidationException("Comment must not be empty");
-        }
-        if (comment.length() > 1000) {
-            throw new ValidationException("Comment must not exceed 1000 characters");
-        }
+        ValidatorUtil.notBlank(comment, "Comment must not be empty");
+        ValidatorUtil.maxLength(comment, 1000, "Comment must not exceed 1000 characters");
     }
 
 }

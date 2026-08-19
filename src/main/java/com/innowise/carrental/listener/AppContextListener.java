@@ -12,10 +12,10 @@ import org.thymeleaf.TemplateEngine;
 public class AppContextListener implements ServletContextListener {
 
     private static final Logger log = LoggerFactory.getLogger(AppContextListener.class);
-    public static final String TEMPLATE_ENGINE_ATTR = "templateEngine";
+    public static final String TEMPLATE_ENGINE_ATTRIBUTE = "templateEngine";
 
     @Override
-    public void contextInitialized(ServletContextEvent sce) {
+    public void contextInitialized(ServletContextEvent servletContextEvent) {
         try {
             ConnectionPool.getInstance();
             log.info("Connection pool initialized");
@@ -24,9 +24,9 @@ public class AppContextListener implements ServletContextListener {
             throw new RuntimeException("Application startup failed", e);
         }
 
-        ServletContext ctx = sce.getServletContext();
-        TemplateEngine engine = ThymeleafConfig.buildEngine(ctx);
-        ctx.setAttribute(TEMPLATE_ENGINE_ATTR, engine);
+        ServletContext servletContext = servletContextEvent.getServletContext();
+        TemplateEngine engine = ThymeleafConfig.buildEngine(servletContext);
+        servletContext.setAttribute(TEMPLATE_ENGINE_ATTRIBUTE, engine);
         log.info("Thymeleaf engine initialized");
     }
 

@@ -9,6 +9,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
 
@@ -17,7 +18,9 @@ public class FileUploadUtil {
     private static final Logger log = LoggerFactory.getLogger(FileUploadUtil.class);
 
     private static final Set<String> ALLOWED_EXTENSIONS = Set.of("jpg", "jpeg", "png", "webp");
-    private static final long MAX_FILE_SIZE = 10 * 1024 * 1024; // 5 MB
+    private static final long MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+    private static final String APP_PROPERTIES = "app.properties";
+    private static final String UPLOADS_PATH = "uploads.path";
 
     private FileUploadUtil() {
 
@@ -41,7 +44,7 @@ public class FileUploadUtil {
 
         if (copied > MAX_FILE_SIZE) {
             Files.deleteIfExists(targetFile);
-            throw new IOException("File too large: max size is 5 MB");
+            throw new IOException("File too large: max size is 10 MB");
         }
 
         log.info("Saved upload: {}", relativePath);
@@ -73,13 +76,13 @@ public class FileUploadUtil {
 
     public static String getUploadsRoot() {
         try (InputStream in = FileUploadUtil.class.getClassLoader()
-                .getResourceAsStream("app.properties")) {
+                .getResourceAsStream(APP_PROPERTIES)) {
             if (in == null) {
                 throw new IllegalStateException("app.properties not found");
             }
-            java.util.Properties props = new java.util.Properties();
-            props.load(in);
-            return props.getProperty("uploads.path");
+            Properties properties = new Properties();
+            properties.load(in);
+            return properties.getProperty(UPLOADS_PATH);
         } catch (IOException e) {
             throw new IllegalStateException("Failed to read uploads.path", e);
         }

@@ -7,6 +7,7 @@ import com.innowise.carrental.service.BookingService;
 import com.innowise.carrental.service.CarService;
 import com.innowise.carrental.service.ReviewService;
 import com.innowise.carrental.service.UserService;
+import com.innowise.carrental.util.ParseUtil;
 import com.innowise.carrental.util.ServletUtil;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
@@ -128,12 +129,12 @@ public class CarDetailServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/cars");
             return null;
         }
-        try {
-            return Long.parseLong(pathInfo.substring(1));
-        } catch (NumberFormatException e) {
+
+        Long carId = ParseUtil.parseLongOrNull(pathInfo.substring(1));
+        if (carId == null) {
             response.sendError(HttpServletResponse.SC_NOT_FOUND, "Invalid car id");
-            return null;
         }
+        return carId;
     }
 
 }

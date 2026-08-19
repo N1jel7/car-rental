@@ -5,6 +5,7 @@ import com.innowise.carrental.exception.ServiceException;
 import com.innowise.carrental.exception.ValidationException;
 import com.innowise.carrental.filter.AuthFilter;
 import com.innowise.carrental.service.ReviewService;
+import com.innowise.carrental.util.ParseUtil;
 import com.innowise.carrental.util.ServletUtil;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
@@ -52,8 +53,8 @@ public class ReviewServlet extends HttpServlet {
         String comment = request.getParameter("comment");
 
         try {
-            long bookingId = Long.parseLong(bookingIdParam);
-            int rating = Integer.parseInt(ratingParam);
+            long bookingId = ParseUtil.parseLong(bookingIdParam, "Invalid review data");
+            int rating = ParseUtil.parseInt(ratingParam, "Invalid review data");
 
             reviewService.create(user.getId(), bookingId, rating, comment);
 
@@ -64,10 +65,6 @@ public class ReviewServlet extends HttpServlet {
         } catch (ValidationException e) {
             response.sendRedirect(request.getContextPath()
                     + "/cars/" + carIdParam + "?error=" + ServletUtil.encode(e.getMessage()));
-
-        } catch (NumberFormatException e) {
-            response.sendRedirect(request.getContextPath()
-                    + "/cars/" + carIdParam + "?error=" + ServletUtil.encode("Invalid review data"));
 
         } catch (ServiceException e) {
             log.error("Failed to create review userId={}", user.getId(), e);

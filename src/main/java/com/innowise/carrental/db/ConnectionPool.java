@@ -72,14 +72,14 @@ public final class ConnectionPool {
     public Connection getConnection() throws DaoException {
         try {
             Connection real = availableConnections.take();
-            return wrapConnection(real);
+            return getProxyConnection(real);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new DaoException("Interrupted while waiting for a free connection", e);
         }
     }
 
-    private Connection wrapConnection(Connection real) {
+    private Connection getProxyConnection(Connection real) {
         return (Connection) Proxy.newProxyInstance(
                 Connection.class.getClassLoader(),
                 new Class[]{Connection.class},

@@ -10,6 +10,7 @@ import com.innowise.carrental.entity.CarStatus;
 import com.innowise.carrental.exception.DaoException;
 import com.innowise.carrental.exception.ServiceException;
 import com.innowise.carrental.exception.ValidationException;
+import com.innowise.carrental.util.ValidatorUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -230,29 +231,21 @@ public class CarService {
     }
 
     private void validateMake(String make) throws ValidationException {
-        if (make == null || make.isBlank()) {
-            throw new ValidationException("Car make must not be empty");
-        }
+        ValidatorUtil.notBlank(make, "Car make must not be empty");
     }
 
     private void validateModel(String model) throws ValidationException {
-        if (model == null || model.isBlank()) {
-            throw new ValidationException("Car model must not be empty");
-        }
+        ValidatorUtil.notBlank(model, "Car model must not be empty");
     }
 
     private void validateYear(int year) throws ValidationException {
         int currentYear = java.time.Year.now().getValue();
-        if (year < 1900 || year > currentYear + 1) {
-            throw new ValidationException(
-                    "Car year must be between 1900 and " + (currentYear + 1));
-        }
+        ValidatorUtil.inRange(year, 1900, currentYear + 1,
+                "Car year must be between 1900 and " + (currentYear + 1));
     }
 
     private void validatePrice(BigDecimal price) throws ValidationException {
-        if (price == null || price.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new ValidationException("Price per day must be greater than 0");
-        }
+        ValidatorUtil.positive(price, "Price per day must be greater than 0");
     }
 
 }

@@ -5,6 +5,7 @@ import com.innowise.carrental.entity.CarImage;
 import com.innowise.carrental.exception.ServiceException;
 import com.innowise.carrental.service.CarService;
 import com.innowise.carrental.service.ReviewService;
+import com.innowise.carrental.util.ParseUtil;
 import com.innowise.carrental.util.ServletUtil;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
@@ -42,10 +43,10 @@ public class CarListServlet extends HttpServlet {
 
         int page = ServletUtil.parsePageParam(request.getParameter("page"));
 
-        String make = trimToNull(request.getParameter("make"));
-        BigDecimal minPrice = parsePrice(request.getParameter("minPrice"));
-        BigDecimal maxPrice = parsePrice(request.getParameter("maxPrice"));
-        Boolean availableOnly = parseAvailability(request.getParameter("status"));
+        String make = ParseUtil.trimToNull(request.getParameter("make"));
+        BigDecimal minPrice = ParseUtil.parsePriceOrNull(request.getParameter("minPrice"));
+        BigDecimal maxPrice = ParseUtil.parsePriceOrNull(request.getParameter("maxPrice"));
+        Boolean availableOnly = ParseUtil.parseAvailability(request.getParameter("status"));
 
         try {
             List<Car> cars = carService.search(make, minPrice, maxPrice, availableOnly, page, PAGE_SIZE);
@@ -88,29 +89,6 @@ public class CarListServlet extends HttpServlet {
             context.setVariable("error", "Failed to load cars. Please try again.");
             ServletUtil.render(CARS_PAGE, context, response, getServletContext());
         }
-    }
-
-    private String trimToNull(String value) {
-        if (value == null) return null;
-        String trimmed = value.strip();
-        return trimmed.isEmpty() ? null : trimmed;
-    }
-
-    private BigDecimal parsePrice(String value) {
-        if (value == null || value.isBlank()) return null;
-        try {
-            BigDecimal price = new BigDecimal(value.strip());
-            return price.signum() < 0 ? null : price;
-        } catch (NumberFormatException e) {
-            return null;
-        }
-    }
-
-    // "available" -> only free cars, "occupied" -> only booked/unavailable, anything else -> no filter
-    private Boolean parseAvailability(String value) {
-        if ("available".equals(value)) return true;
-        if ("occupied".equals(value)) return false;
-        return null;
     }
 
 }

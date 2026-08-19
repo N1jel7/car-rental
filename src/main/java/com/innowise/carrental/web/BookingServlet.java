@@ -6,6 +6,7 @@ import com.innowise.carrental.exception.ServiceException;
 import com.innowise.carrental.exception.ValidationException;
 import com.innowise.carrental.filter.AuthFilter;
 import com.innowise.carrental.service.BookingService;
+import com.innowise.carrental.util.ParseUtil;
 import com.innowise.carrental.util.ServletUtil;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
@@ -18,7 +19,6 @@ import org.thymeleaf.context.WebContext;
 
 import java.io.IOException;
 import java.time.LocalDate;
-import java.time.format.DateTimeParseException;
 import java.util.List;
 
 public class BookingServlet extends HttpServlet {
@@ -97,13 +97,21 @@ public class BookingServlet extends HttpServlet {
 
         User user = getSessionUser(request);
         String carIdParam = request.getParameter("carId");
-        String dateFromParam = request.getParameter("dateFrom");
-        String dateToParam = request.getParameter("dateTo");
+
+        long carId;
+        try {
+            carId = ParseUtil.parseLong(carIdParam, "Invalid car");
+        } catch (ValidationException e) {
+            response.sendRedirect(request.getContextPath()
+                    + "/cars?error=" + ServletUtil.encode(e.getMessage()));
+            return;
+        }
 
         try {
-            long carId = Long.parseLong(carIdParam);
-            LocalDate dateFrom = LocalDate.parse(dateFromParam);
-            LocalDate dateTo = LocalDate.parse(dateToParam);
+            LocalDate dateFrom = ParseUtil.parseDate(
+                    request.getParameter("dateFrom"), "Please select valid dates");
+            LocalDate dateTo = ParseUtil.parseDate(
+                    request.getParameter("dateTo"), "Please select valid dates");
 
             bookingService.create(user.getId(), carId, dateFrom, dateTo);
 
@@ -112,22 +120,14 @@ public class BookingServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath()
                     + "/bookings?success=booking_created");
 
-        } catch (DateTimeParseException e) {
-            response.sendRedirect(request.getContextPath()
-                    + "/cars/" + carIdParam + "?error=" + ServletUtil.encode("Please select valid dates"));
-
         } catch (ValidationException e) {
             response.sendRedirect(request.getContextPath()
-                    + "/cars/" + carIdParam + "?error=" + ServletUtil.encode(e.getMessage()));
-
-        } catch (NumberFormatException e) {
-            response.sendRedirect(request.getContextPath()
-                    + "/cars?error=" + ServletUtil.encode("Invalid car"));
+                    + "/cars/" + carId + "?error=" + ServletUtil.encode(e.getMessage()));
 
         } catch (ServiceException e) {
-            log.error("Failed to create booking userId={} carId={}", user.getId(), carIdParam, e);
+            log.error("Failed to create booking userId={} carId={}", user.getId(), carId, e);
             response.sendRedirect(request.getContextPath()
-                    + "/cars/" + carIdParam + "?error=" + ServletUtil.encode("Failed to create the booking. Please try again"));
+                    + "/cars/" + carId + "?error=" + ServletUtil.encode("Failed to create the booking. Please try again"));
         }
     }
 
@@ -138,7 +138,7 @@ public class BookingServlet extends HttpServlet {
         String bookingIdParam = request.getParameter("id");
 
         try {
-            long bookingId = Long.parseLong(bookingIdParam);
+            long bookingId = ParseUtil.parseLong(bookingIdParam, "Invalid booking");
             bookingService.cancel(bookingId, user.getId());
 
             log.info("Booking cancelled bookingId={} userId={}", bookingId, user.getId());
@@ -148,10 +148,6 @@ public class BookingServlet extends HttpServlet {
         } catch (ValidationException e) {
             response.sendRedirect(request.getContextPath()
                     + "/bookings?error=" + ServletUtil.encode(e.getMessage()));
-
-        } catch (NumberFormatException e) {
-            response.sendRedirect(request.getContextPath()
-                    + "/bookings?error=" + ServletUtil.encode("Invalid booking"));
 
         } catch (ServiceException e) {
             log.error("Failed to cancel booking id={} userId={}", bookingIdParam, user.getId(), e);

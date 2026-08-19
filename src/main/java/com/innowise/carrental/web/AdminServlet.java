@@ -9,7 +9,9 @@ import com.innowise.carrental.exception.ValidationException;
 import com.innowise.carrental.service.BookingService;
 import com.innowise.carrental.service.CarService;
 import com.innowise.carrental.util.FileUploadUtil;
+import com.innowise.carrental.util.ParseUtil;
 import com.innowise.carrental.util.ServletUtil;
+import com.innowise.carrental.util.ValidatorUtil;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -21,7 +23,6 @@ import org.thymeleaf.context.WebContext;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -32,8 +33,7 @@ public class AdminServlet extends HttpServlet {
     private static final String ADMIN_CARS_PAGE = "admin/cars";
     private static final String ADMIN_BOOKINGS_PAGE = "admin/bookings";
     private static final String ADMIN_CAR_FORM_PAGE = "admin/car-form";
-    private static final String NEW_PREFIX = "new:";
-    private static final String EXISTING_PREFIX = "existing:";
+    private static final String SUBFOLDER = "cars";
     private static final int PAGE_SIZE = 10;
     private static final int MAX_IMAGES = 10;
     private static final long MAX_IMAGE_SIZE = 10 * 1024 * 1024;
@@ -193,7 +193,7 @@ public class AdminServlet extends HttpServlet {
     private void handleCarCreate(HttpServletRequest request, HttpServletResponse response)
             throws IOException, ServletException {
         try {
-            List<Part> imageParts = collectImageParts(request);
+            List<Part> imageParts = ParseUtil.collectParts(request, "images");
 
             if (imageParts.isEmpty()) {
                 redirect(request, response, "/admin/cars/new", "error", "At least one photo is required");
@@ -203,29 +203,32 @@ public class AdminServlet extends HttpServlet {
                 redirect(request, response, "/admin/cars/new", "error", "Too many photos: max " + MAX_IMAGES);
                 return;
             }
-            String imageError = validateImageParts(imageParts);
+            String imageError = ValidatorUtil.validateImageParts(imageParts, ALLOWED_IMAGE_EXTENSIONS, MAX_IMAGE_SIZE);
             if (imageError != null) {
                 redirect(request, response, "/admin/cars/new", "error", imageError);
                 return;
             }
 
+            int year = ParseUtil.parseInt(request.getParameter("year"),
+                    "Please enter valid numbers for year and price");
+            BigDecimal price = ParseUtil.parseBigDecimal(request.getParameter("pricePerDay"),
+                    "Please enter valid numbers for year and price");
+
             Car car = carService.add(
                     request.getParameter("make"),
                     request.getParameter("model"),
-                    Integer.parseInt(request.getParameter("year")),
-                    new BigDecimal(request.getParameter("pricePerDay")),
+                    year,
+                    price,
                     request.getParameter("description")
             );
 
-            int coverIndex = parseNewCoverIndex(request.getParameter("primarySelection"), imageParts.size());
+            int coverIndex = ParseUtil.parseNewCoverIndex(request.getParameter("primarySelection"), imageParts.size());
             saveImages(car.getId(), imageParts, coverIndex);
 
             redirect(request, response, "/admin/cars", "success", "Car created successfully");
 
         } catch (ValidationException e) {
             redirect(request, response, "/admin/cars/new", "error", e.getMessage());
-        } catch (NumberFormatException e) {
-            redirect(request, response, "/admin/cars/new", "error", "Please enter valid numbers for year and price");
         } catch (ServiceException | IOException e) {
             log.error("Admin failed to create car", e);
             redirect(request, response, "/admin/cars", "error", "Failed to create the car. Please try again");
@@ -238,19 +241,25 @@ public class AdminServlet extends HttpServlet {
         String carIdParam = request.getParameter("carId");
 
         try {
-            long carId = Long.parseLong(carIdParam);
+            long carId = ParseUtil.parseLong(carIdParam,
+                    "Please enter valid numbers for year and price");
+            int year = ParseUtil.parseInt(request.getParameter("year"),
+                    "Please enter valid numbers for year and price");
+            BigDecimal price = ParseUtil.parseBigDecimal(request.getParameter("pricePerDay"),
+                    "Please enter valid numbers for year and price");
+
             carService.update(
                     carId,
                     request.getParameter("make"),
                     request.getParameter("model"),
-                    Integer.parseInt(request.getParameter("year")),
-                    new BigDecimal(request.getParameter("pricePerDay")),
+                    year,
+                    price,
                     request.getParameter("description")
             );
 
             Set<Long> deletedImageIds = deleteRequestedImages(request);
 
-            List<Part> imageParts = collectImageParts(request);
+            List<Part> imageParts = ParseUtil.collectParts(request, "images");
             int existingCount = carService.findImages(carId).size();
             String editPath = "/admin/cars/edit?carId=" + carId;
 
@@ -258,7 +267,7 @@ public class AdminServlet extends HttpServlet {
                 redirect(request, response, editPath, "error", "Too many photos: max " + MAX_IMAGES);
                 return;
             }
-            String imageError = validateImageParts(imageParts);
+            String imageError = ValidatorUtil.validateImageParts(imageParts, ALLOWED_IMAGE_EXTENSIONS, MAX_IMAGE_SIZE);
             if (imageError != null) {
                 redirect(request, response, editPath, "error", imageError);
                 return;
@@ -267,20 +276,20 @@ public class AdminServlet extends HttpServlet {
             // "primarySelection" is either "existing:<imageId>" (an already-saved photo)
             // or "new:<index>" (one of the files being uploaded right now).
             String primarySelection = request.getParameter("primarySelection");
-            Integer newCoverIndex = parseNewIndex(primarySelection);
+            Integer newCoverIndex = ParseUtil.parseNewIndex(primarySelection);
             saveImages(carId, imageParts, newCoverIndex != null ? newCoverIndex : -1);
 
-            Long existingCoverId = parseExistingId(primarySelection);
+            Long existingCoverId = ParseUtil.parseExistingId(primarySelection);
             if (existingCoverId != null && !deletedImageIds.contains(existingCoverId)) {
                 carService.setPrimaryImage(carId, existingCoverId);
             }
 
-            // If no image ended up primary (e.g. the chosen/primary photo was deleted),
+            // If no image ended up primary (the chosen/primary photo was deleted),
             // fall back to making the first remaining photo primary.
             List<CarImage> remainingImages = carService.findImages(carId);
             boolean hasPrimary = remainingImages.stream().anyMatch(CarImage::isPrimary);
             if (!hasPrimary && !remainingImages.isEmpty()) {
-                carService.setPrimaryImage(carId, remainingImages.get(0).getId());
+                carService.setPrimaryImage(carId, remainingImages.getFirst().getId());
             }
 
             log.info("Admin updated car id={}", carId);
@@ -288,8 +297,6 @@ public class AdminServlet extends HttpServlet {
 
         } catch (ValidationException e) {
             redirect(request, response, "/admin/cars", "error", e.getMessage());
-        } catch (NumberFormatException e) {
-            redirect(request, response, "/admin/cars", "error", "Please enter valid numbers for year and price");
         } catch (ServiceException e) {
             log.error("Admin failed to update car id={}", carIdParam, e);
             redirect(request, response, "/admin/cars", "error", "Failed to update the car. Please try again");
@@ -302,14 +309,14 @@ public class AdminServlet extends HttpServlet {
         String carIdParam = request.getParameter("carId");
 
         try {
-            long carId = Long.parseLong(carIdParam);
+            long carId = ParseUtil.parseLong(carIdParam, "Invalid car");
             carService.delete(carId);
 
             log.info("Admin deleted car id={}", carId);
             redirect(request, response, "/admin/cars", "success", "Car deleted successfully");
 
-        } catch (NumberFormatException e) {
-            redirect(request, response, "/admin/cars", "error", "Invalid car");
+        } catch (ValidationException e) {
+            redirect(request, response, "/admin/cars", "error", e.getMessage());
         } catch (ServiceException e) {
             log.error("Admin failed to delete car id={}", carIdParam, e);
             redirect(request, response, "/admin/cars", "error", e.getMessage());
@@ -322,14 +329,14 @@ public class AdminServlet extends HttpServlet {
         String bookingIdParam = request.getParameter("id");
 
         try {
-            long bookingId = Long.parseLong(bookingIdParam);
+            long bookingId = ParseUtil.parseLong(bookingIdParam, "Invalid booking");
             bookingService.confirm(bookingId);
 
             log.info("Admin confirmed booking id={}", bookingId);
             redirect(request, response, "/admin/bookings", "success", "Booking confirmed");
 
-        } catch (NumberFormatException e) {
-            redirect(request, response, "/admin/bookings", "error", "Invalid booking");
+        } catch (ValidationException e) {
+            redirect(request, response, "/admin/bookings", "error", e.getMessage());
         } catch (ServiceException e) {
             log.error("Admin failed to confirm booking id={}", bookingIdParam, e);
             redirect(request, response, "/admin/bookings", "error", e.getMessage());
@@ -342,14 +349,14 @@ public class AdminServlet extends HttpServlet {
         String bookingIdParam = request.getParameter("id");
 
         try {
-            long bookingId = Long.parseLong(bookingIdParam);
+            long bookingId = ParseUtil.parseLong(bookingIdParam, "Invalid booking");
             bookingService.complete(bookingId);
 
             log.info("Admin completed booking id={}", bookingId);
             redirect(request, response, "/admin/bookings", "success", "Booking completed");
 
-        } catch (NumberFormatException e) {
-            redirect(request, response, "/admin/bookings", "error", "Invalid booking");
+        } catch (ValidationException e) {
+            redirect(request, response, "/admin/bookings", "error", e.getMessage());
         } catch (ServiceException e) {
             log.error("Admin failed to complete booking id={}", bookingIdParam, e);
             redirect(request, response, "/admin/bookings", "error", e.getMessage());
@@ -365,30 +372,6 @@ public class AdminServlet extends HttpServlet {
                 + ServletUtil.encode(message));
     }
 
-    private List<Part> collectImageParts(HttpServletRequest request) throws IOException, ServletException {
-        List<Part> parts = new ArrayList<>();
-        for (Part part : request.getParts()) {
-            if ("images".equals(part.getName()) && part.getSize() > 0) {
-                parts.add(part);
-            }
-        }
-        return parts;
-    }
-
-    // Returns a readable error message for the first invalid part or null if ok.
-    private String validateImageParts(List<Part> parts) {
-        for (Part part : parts) {
-            if (part.getSize() > MAX_IMAGE_SIZE) {
-                return "File too large: max 10 MB";
-            }
-            String extension = extractExtension(part.getSubmittedFileName());
-            if (!ALLOWED_IMAGE_EXTENSIONS.contains(extension)) {
-                return "Invalid file type. Allowed: jpg, jpeg, png, webp";
-            }
-        }
-        return null;
-    }
-
     // Saves every part to disk and links it to the car
     private void saveImages(long carId, List<Part> parts, int coverIndex) throws IOException, ServiceException {
         String uploadsRoot = FileUploadUtil.getUploadsRoot();
@@ -397,7 +380,7 @@ public class AdminServlet extends HttpServlet {
             String path = FileUploadUtil.save(
                     part.getInputStream(),
                     part.getSubmittedFileName(),
-                    "cars",
+                    SUBFOLDER,
                     uploadsRoot
             );
             carService.addImage(carId, path, i == coverIndex);
@@ -406,56 +389,11 @@ public class AdminServlet extends HttpServlet {
 
     private Set<Long> deleteRequestedImages(HttpServletRequest request) throws ServiceException {
         Set<Long> deletedImageIds = new HashSet<>();
-        String[] deleteIds = request.getParameterValues("deleteImages");
-        if (deleteIds == null) {
-            return deletedImageIds;
-        }
-        for (String deleteId : deleteIds) {
-            Long id = parseLongOrNull(deleteId);
-            if (id != null) {
-                carService.deleteImage(id);
-                deletedImageIds.add(id);
-            }
+        for (Long id : ParseUtil.parseLongList(request.getParameterValues("deleteImages"))) {
+            carService.deleteImage(id);
+            deletedImageIds.add(id);
         }
         return deletedImageIds;
-    }
-
-    private String extractExtension(String filename) {
-        return filename != null && filename.contains(".")
-                ? filename.substring(filename.lastIndexOf('.') + 1).toLowerCase()
-                : "";
-    }
-
-    // Reads the "primarySelection" value (example "new:2"), default 0 when nothing valid was picked.
-    private int parseNewCoverIndex(String primarySelection, int uploadedCount) {
-        Integer index = parseNewIndex(primarySelection);
-        return (index != null && index >= 0 && index < uploadedCount) ? index : 0;
-    }
-
-    private Integer parseNewIndex(String primarySelection) {
-        if (primarySelection == null || !primarySelection.startsWith(NEW_PREFIX)) {
-            return null;
-        }
-        try {
-            return Integer.parseInt(primarySelection.substring(NEW_PREFIX.length()));
-        } catch (NumberFormatException e) {
-            return null;
-        }
-    }
-
-    private Long parseExistingId(String primarySelection) {
-        if (primarySelection == null || !primarySelection.startsWith(EXISTING_PREFIX)) {
-            return null;
-        }
-        return parseLongOrNull(primarySelection.substring(EXISTING_PREFIX.length()));
-    }
-
-    private Long parseLongOrNull(String value) {
-        try {
-            return Long.parseLong(value);
-        } catch (NumberFormatException e) {
-            return null;
-        }
     }
 
 }

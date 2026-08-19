@@ -78,7 +78,7 @@ public class ServletUtil {
             ServletContext servletContext
     ) throws IOException {
 
-        TemplateEngine engine = (TemplateEngine) servletContext.getAttribute(AppContextListener.TEMPLATE_ENGINE_ATTR);
+        TemplateEngine engine = (TemplateEngine) servletContext.getAttribute(AppContextListener.TEMPLATE_ENGINE_ATTRIBUTE);
         response.setContentType("text/html;charset=UTF-8");
         engine.process(template, ctx, response.getWriter());
     }

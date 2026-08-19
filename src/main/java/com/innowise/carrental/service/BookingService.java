@@ -11,6 +11,7 @@ import com.innowise.carrental.entity.CarStatus;
 import com.innowise.carrental.exception.DaoException;
 import com.innowise.carrental.exception.ServiceException;
 import com.innowise.carrental.exception.ValidationException;
+import com.innowise.carrental.util.ValidatorUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -212,15 +213,9 @@ public class BookingService {
 
     private void validateDates(LocalDate dateFrom, LocalDate dateTo)
             throws ValidationException {
-        if (dateFrom == null || dateTo == null) {
-            throw new ValidationException("Dates must not be empty");
-        }
-        if (!dateFrom.isBefore(dateTo)) {
-            throw new ValidationException("Return date must be after pickup date");
-        }
-        if (dateFrom.isBefore(LocalDate.now())) {
-            throw new ValidationException("Pickup date cannot be in the past");
-        }
+        ValidatorUtil.isTrue(dateFrom != null && dateTo != null, "Dates must not be empty");
+        ValidatorUtil.isTrue(dateFrom.isBefore(dateTo), "Return date must be after pickup date");
+        ValidatorUtil.isTrue(!dateFrom.isBefore(LocalDate.now()), "Pickup date cannot be in the past");
     }
 
 }
